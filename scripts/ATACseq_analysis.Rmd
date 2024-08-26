@@ -50,17 +50,16 @@ colours_Age <- c("#EC7B22", "#6DB7DA","#074010")
 Only 5 Adult samples of each cell type (with the highest FRiP score) are included
 
 ```{r load_input_5Adult}
-df_raw <- read.delim("../data/ATACseq_analysis/mm10_allagegroups_CD150hiandprog_5topFRiPYA_macspeaks_tagdir_mergedPeaks_noadj.txt", header = TRUE, sep = "\t")
-colnames(df_raw)[1] <- "Location" # Change this column name because it is so long
+df_raw <- read.delim("../data/ATACseq_analysis/mm10_allagegroups_CD150hiandprog_5topFRiPAdult_macspeaks_tagdir_mergedPeaks_noadj.txt", header = TRUE, sep = "\t")
 
 basic <- df_raw[,1:19]
 
-annotation <- read.csv2("../data/ATACseq_analysis/mm10_atacseq_pooled_CD150hiandprog_5topFRiPYA_flowcells_annotations.csv", header = TRUE) %>% as_tibble()
+annotation <- read.csv2("../data/ATACseq_analysis/mm10_allagegroups_CD150hiandprog_5topFRiPAdult_macspeaks_tagdir_annotations.csv", header = TRUE) %>% as_tibble()
 annotation <- annotation %>%
   mutate(Cell_type = factor(Cell_type, levels = c("CD49bneg", "CD49bpos", "LMPP", "GMP"))) %>%
-  mutate(Age = factor(Age, levels = c("Young","Adult","Old"))) %>%
+  mutate(Age = factor(Age, levels = c("Juvenile","Adult","Old"))) %>%
   mutate(AgeCelltype = paste(Age, Cell_type, sep = "_")) %>%
-  mutate(AgeCelltype = factor(AgeCelltype, levels = c("Young_CD49bneg", "Young_CD49bpos", "Young_LMPP", "Young_GMP", "Adult_CD49bneg", "Adult_CD49bpos", "Adult_LMPP", "Adult_GMP", "Old_CD49bneg", "Old_CD49bpos", "Old_LMPP", "Old_GMP"))) %>%
+  mutate(AgeCelltype = factor(AgeCelltype, levels = c("Juvenile_CD49bneg", "Juvenile_CD49bpos", "Juvenile_LMPP", "Juvenile_GMP", "Adult_CD49bneg", "Adult_CD49bpos", "Adult_LMPP", "Adult_GMP", "Old_CD49bneg", "Old_CD49bpos", "Old_LMPP", "Old_GMP"))) %>%
   mutate(Short_name = factor(Short_name, levels = rev(Short_name[order(AgeCelltype)])))
 
 # Define indexes for CD150high samples
@@ -82,12 +81,12 @@ peaks_found_in_CD49bpos_Adult <- peaks_found(df_RPKM, annotation, "Adult_CD49bpo
 peaks_found_in_CD49bneg_Adult <- peaks_found(df_RPKM, annotation, "Adult_CD49bneg")
 peaks_found_in_LMPP_Adult <- peaks_found(df_RPKM, annotation, "Adult_LMPP")
 peaks_found_in_GMP_Adult <- peaks_found(df_RPKM, annotation, "Adult_GMP")
-peaks_found_in_CD49bpos_Young <- peaks_found(df_RPKM, annotation, "Young_CD49bpos")
-peaks_found_in_CD49bneg_Young <- peaks_found(df_RPKM, annotation, "Young_CD49bneg")
-peaks_found_in_LMPP_Young <- peaks_found(df_RPKM, annotation, "Young_LMPP")
-peaks_found_in_GMP_Young <- peaks_found(df_RPKM, annotation, "Young_GMP")
+peaks_found_in_CD49bpos_Juvenile <- peaks_found(df_RPKM, annotation, "Juvenile_CD49bpos")
+peaks_found_in_CD49bneg_Juvenile <- peaks_found(df_RPKM, annotation, "Juvenile_CD49bneg")
+peaks_found_in_LMPP_Juvenile <- peaks_found(df_RPKM, annotation, "Juvenile_LMPP")
+peaks_found_in_GMP_Juvenile <- peaks_found(df_RPKM, annotation, "Juvenile_GMP")
 
-peaks_kept_merged <- union(union(union(union(union(union(union(union(union(union(union(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bneg_Old),peaks_found_in_LMPP_Old),peaks_found_in_GMP_Old),peaks_found_in_CD49bpos_Adult),peaks_found_in_CD49bneg_Adult),peaks_found_in_LMPP_Adult),peaks_found_in_GMP_Adult),peaks_found_in_CD49bpos_Young),peaks_found_in_CD49bneg_Young),peaks_found_in_LMPP_Young),peaks_found_in_GMP_Young)
+peaks_kept_merged <- union(union(union(union(union(union(union(union(union(union(union(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bneg_Old),peaks_found_in_LMPP_Old),peaks_found_in_GMP_Old),peaks_found_in_CD49bpos_Adult),peaks_found_in_CD49bneg_Adult),peaks_found_in_LMPP_Adult),peaks_found_in_GMP_Adult),peaks_found_in_CD49bpos_Juvenile),peaks_found_in_CD49bneg_Juvenile),peaks_found_in_LMPP_Juvenile),peaks_found_in_GMP_Juvenile)
 df_raw_filtered <- df_raw[peaks_kept_merged,]
 ```
 
@@ -113,11 +112,11 @@ p <- ggplot(annotation, aes(y = Short_name, x = FRiP, fill = Cell_type, alpha = 
   scale_x_continuous(expand = c(0, 0)) +
   geom_vline(xintercept = 10, linetype = "dashed", color = "black") +
   scale_fill_manual(values = colours_Celltypes) +
-  scale_alpha_manual(values = c(1,1,1)) # Can be changed to check that the young samples are at the top and the old samples at the bottom of the plot
+  scale_alpha_manual(values = c(1,1,1)) # Can be changed to check that the juvenile samples are at the top and the old samples at the bottom of the plot
 print(p)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/ATAC_QC_FRiP_score.eps", width = 6, height = 8)
+postscript("../plots/ATACseq_analysis/S7a_ATAC_QC_FRiP_score.eps", width = 6, height = 8)
 print(p)
 dev.off()
 
@@ -129,11 +128,11 @@ p <- ggplot(annotation, aes(y = Short_name, x = Mapped_filtered_read_pairs/1e6, 
   theme(axis.text.y = element_blank()) +
   scale_x_continuous(expand = c(0, 0)) +
   scale_fill_manual(values = colours_Celltypes) +
-  scale_alpha_manual(values = c(1,1,1)) # Can be changed to check that the young samples are at the top and the old samples at the bottom of the plot
+  scale_alpha_manual(values = c(1,1,1)) # Can be changed to check that the juvenile samples are at the top and the old samples at the bottom of the plot
 print(p)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/ATAC_QC_Read_number.eps", width = 6, height = 8)
+postscript("../plots/ATACseq_analysis/S7a_ATAC_QC_Read_number.eps", width = 6, height = 8)
 print(p)
 dev.off()
 ```
@@ -159,7 +158,7 @@ Correlation_Heatmap(df_LQT, annotation, basic, "All cell populations", cor = "sp
                     colours_Celltypes = colours_Celltypes, colours_Age = colours_Age)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/CorrelationHeatmap_allPopulations_spearman.eps", width = 7, height = 6)
+postscript("../plots/ATACseq_analysis/S7b_CorrelationHeatmap_allPopulations_spearman.eps", width = 7, height = 6)
   Correlation_Heatmap(df_LQT, annotation, basic, "All cell populations", cor = "spearman",
                       colours_Celltypes = colours_Celltypes, colours_Age = colours_Age)
 dev.off()
@@ -176,7 +175,7 @@ p <- PCAplt(df_LQT, annotation, basic, groupVector = annotation$Age, groupVector
             colorVector = colours_Age)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/PCA_allPopulations_PC1vs2.eps", width = 7, height = 6)
+postscript("../plots/ATACseq_analysis/5a_PCA_allPopulations_PC1vs2.eps", width = 7, height = 6)
   print(p)
 dev.off()
 
@@ -186,7 +185,7 @@ p <- PCAplt(df_LQT[,i_main_df], annotation[i_main,], basic, groupVector = annota
             showFilename = FALSE, pc1 = 1, pc2 = 2, colorVector = colours_Age)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/PCA_mainPopulations_PC1vs2.eps", width = 7, height = 6)
+postscript("../plots/ATACseq_analysis/5b_PCA_mainPopulations_PC1vs2.eps", width = 7, height = 6)
   print(p)
 dev.off()
 
@@ -196,7 +195,7 @@ p <- PCAplt(df_LQT[,i_main_df], annotation[i_main,], basic, groupVector = annota
 print(p)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/PCA_mainPopulations_PC1vs3.eps", width = 7, height = 6)
+postscript("../plots/ATACseq_analysis/S8a_PCA_mainPopulations_PC1vs3.eps", width = 7, height = 6)
   print(p)
 dev.off()
 
@@ -205,14 +204,14 @@ p <- PCAplt(df_LQT[,i_main_df], annotation[i_main,], basic, groupVector = annota
             showFilename = FALSE, pc1 = 1, pc2 = 4, colorVector = colours_Age)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/PCA_mainPopulations_PC1vs4.eps", width = 7, height = 6)
+postscript("../plots/ATACseq_analysis/5b_PCA_mainPopulations_PC1vs4.eps", width = 7, height = 6)
   print(p)
 dev.off()
 ```
 
 ## Differential analysis - Pairwise comparisons Age and celltype without Adult
 
-```{r Differential_Y_O, message=FALSE}
+```{r Differential_J_O, message=FALSE}
 df_raw_filtered_main <- df_raw_filtered[,i_main_df]
 annotation_main <- annotation[i_main,]
 df_raw_filtered_main <- df_raw_filtered_main[,c(1:length(basic),(length(basic)+which(annotation_main$Age != "Adult")))]
@@ -221,7 +220,7 @@ annotation_main <- annotation_main[which(annotation_main$Age != "Adult"),]
 My_DESeq <- DESeq2(df_raw_filtered_main, annotation_main, basic, GroupCol = "AgeCelltype")
 ```
 
-```{r Differential_Y_O_2}
+```{r Differential_J_O_2}
 p_max_Celltype <- 0.05
 p_max_Age <- 0.0001
 
@@ -237,87 +236,87 @@ Up_Oneg_Opos <- find_up_down(df_DESeq2, "Old_CD49bneg","Old_CD49bpos",
 Down_Oneg_Opos <- find_up_down(df_DESeq2, "Old_CD49bneg","Old_CD49bpos",
                                p_max_Celltype, dir = "down")
 
-df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Young_CD49bneg", "Young_CD49bpos",
+df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Juvenile_CD49bneg", "Juvenile_CD49bpos",
                                    Groupcol = "AgeCelltype", p_max = p_max_Celltype)
-Diff_Yneg_Ypos <- find_up_down(df_DESeq2, "Young_CD49bneg","Young_CD49bpos",
+Diff_Jneg_Jpos <- find_up_down(df_DESeq2, "Juvenile_CD49bneg","Juvenile_CD49bpos",
                                p_max_Celltype, dir = "both")
-Up_Yneg_Ypos <- find_up_down(df_DESeq2, "Young_CD49bneg","Young_CD49bpos",
+Up_Jneg_Jpos <- find_up_down(df_DESeq2, "Juvenile_CD49bneg","Juvenile_CD49bpos",
                              p_max_Celltype, dir = "up")
-Down_Yneg_Ypos <- find_up_down(df_DESeq2, "Young_CD49bneg","Young_CD49bpos",
+Down_Jneg_Jpos <- find_up_down(df_DESeq2, "Juvenile_CD49bneg","Juvenile_CD49bpos",
                                p_max_Celltype, dir = "down")
 
-Diff_merged_neg_pos <- df_DESeq2[unique(c(rownames(Diff_Oneg_Opos), rownames(Diff_Yneg_Ypos))),]
-Up_merged_neg_pos <- df_DESeq2[unique(c(rownames(Up_Oneg_Opos), rownames(Up_Yneg_Ypos))),]
-Down_merged_neg_pos <- df_DESeq2[unique(c(rownames(Down_Oneg_Opos), rownames(Down_Yneg_Ypos))),]
+Diff_merged_neg_pos <- df_DESeq2[unique(c(rownames(Diff_Oneg_Opos), rownames(Diff_Jneg_Jpos))),]
+Up_merged_neg_pos <- df_DESeq2[unique(c(rownames(Up_Oneg_Opos), rownames(Up_Jneg_Jpos))),]
+Down_merged_neg_pos <- df_DESeq2[unique(c(rownames(Down_Oneg_Opos), rownames(Down_Jneg_Jpos))),]
 
-# Old vs Young
-df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Old_CD49bneg", "Young_CD49bneg",
+# Old vs Juvenile
+df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Old_CD49bneg", "Juvenile_CD49bneg",
                                    Groupcol = "AgeCelltype", p_max = p_max_Age)
-Diff_Oneg_Yneg <- find_up_down(df_DESeq2, "Old_CD49bneg","Young_CD49bneg",
+Diff_Oneg_Jneg <- find_up_down(df_DESeq2, "Old_CD49bneg","Juvenile_CD49bneg",
                                p_max_Age, dir = "both")
-Up_Oneg_Yneg <- find_up_down(df_DESeq2, "Old_CD49bneg","Young_CD49bneg",
+Up_Oneg_Jneg <- find_up_down(df_DESeq2, "Old_CD49bneg","Juvenile_CD49bneg",
                              p_max_Age, dir = "up")
-Down_Oneg_Yneg <- find_up_down(df_DESeq2, "Old_CD49bneg","Young_CD49bneg",
+Down_Oneg_Jneg <- find_up_down(df_DESeq2, "Old_CD49bneg","Juvenile_CD49bneg",
                                p_max_Age, dir = "down")
 
-df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Old_CD49bpos", "Young_CD49bpos",
+df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Old_CD49bpos", "Juvenile_CD49bpos",
                                    Groupcol = "AgeCelltype", p_max = p_max_Age)
-Diff_Opos_Ypos <- find_up_down(df_DESeq2, "Old_CD49bpos","Young_CD49bpos",
+Diff_Opos_Jpos <- find_up_down(df_DESeq2, "Old_CD49bpos","Juvenile_CD49bpos",
                                p_max_Age, dir = "both")
-Up_Opos_Ypos <- find_up_down(df_DESeq2, "Old_CD49bpos","Young_CD49bpos",
+Up_Opos_Jpos <- find_up_down(df_DESeq2, "Old_CD49bpos","Juvenile_CD49bpos",
                              p_max_Age, dir = "up")
-Down_Opos_Ypos <- find_up_down(df_DESeq2, "Old_CD49bpos","Young_CD49bpos",
+Down_Opos_Jpos <- find_up_down(df_DESeq2, "Old_CD49bpos","Juvenile_CD49bpos",
                                p_max_Age, dir = "down")
 
-Diff_merged_Y_O <- df_DESeq2[unique(c(rownames(Diff_Oneg_Yneg), rownames(Diff_Opos_Ypos))),]
-Up_merged_O_Y <- df_DESeq2[unique(c(rownames(Up_Oneg_Yneg), rownames(Up_Opos_Ypos))),]
-Down_merged_O_Y <- df_DESeq2[unique(c(rownames(Down_Oneg_Yneg), rownames(Down_Opos_Ypos))),]
+Diff_merged_J_O <- df_DESeq2[unique(c(rownames(Diff_Oneg_Jneg), rownames(Diff_Opos_Jpos))),]
+Up_merged_O_J <- df_DESeq2[unique(c(rownames(Up_Oneg_Jneg), rownames(Up_Opos_Jpos))),]
+Down_merged_O_J <- df_DESeq2[unique(c(rownames(Down_Oneg_Jneg), rownames(Down_Opos_Jpos))),]
 
 # Extremes
-df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Old_CD49bneg", "Young_CD49bpos",
+df_DESeq2 <- Pairwise_differential(My_DESeq, df_DESeq2, "Old_CD49bneg", "Juvenile_CD49bpos",
                                    Groupcol = "AgeCelltype", p_max = p_max_Age)
-Diff_Oneg_Ypos <- find_up_down(df_DESeq2, "Old_CD49bneg","Young_CD49bpos",
+Diff_Oneg_Jpos <- find_up_down(df_DESeq2, "Old_CD49bneg","Juvenile_CD49bpos",
                                p_max_Age, dir = "both")
-Up_Oneg_Ypos <- find_up_down(df_DESeq2, "Old_CD49bneg","Young_CD49bpos",
+Up_Oneg_Jpos <- find_up_down(df_DESeq2, "Old_CD49bneg","Juvenile_CD49bpos",
                              p_max_Age, dir = "up")
-Down_Oneg_Ypos <- find_up_down(df_DESeq2, "Old_CD49bneg","Young_CD49bpos",
+Down_Oneg_Jpos <- find_up_down(df_DESeq2, "Old_CD49bneg","Juvenile_CD49bpos",
                                p_max_Age, dir = "down")
 ```
 
 ## Filter out those diff peaks that are not found in either compared population
 
-```{r Differential_Y_O_3}
+```{r Differential_J_O_3}
 # By subset
 Up_Oneg_Opos <- filter(Up_Oneg_Opos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bneg_Old)]))
 Down_Oneg_Opos <- filter(Down_Oneg_Opos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bneg_Old)]))
 Diff_Oneg_Opos <- filter(Diff_Oneg_Opos, Location %in% c(Up_Oneg_Opos$Location, Down_Oneg_Opos$Location))
 
-Up_Yneg_Ypos <- filter(Up_Yneg_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Young,peaks_found_in_CD49bneg_Young)]))
-Down_Yneg_Ypos <- filter(Down_Yneg_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Young,peaks_found_in_CD49bneg_Young)]))
-Diff_Yneg_Ypos <- filter(Diff_Yneg_Ypos, Location %in% c(Up_Yneg_Ypos$Location, Down_Yneg_Ypos$Location))
+Up_Jneg_Jpos <- filter(Up_Jneg_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Juvenile,peaks_found_in_CD49bneg_Juvenile)]))
+Down_Jneg_Jpos <- filter(Down_Jneg_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Juvenile,peaks_found_in_CD49bneg_Juvenile)]))
+Diff_Jneg_Jpos <- filter(Diff_Jneg_Jpos, Location %in% c(Up_Jneg_Jpos$Location, Down_Jneg_Jpos$Location))
 
-Diff_merged_neg_pos <- filter(Diff_merged_neg_pos, Location %in% c(Diff_Oneg_Opos$Location, Diff_Yneg_Ypos$Location))
+Diff_merged_neg_pos <- filter(Diff_merged_neg_pos, Location %in% c(Diff_Oneg_Opos$Location, Diff_Jneg_Jpos$Location))
 
 # By age
-Up_Oneg_Yneg <- filter(Up_Oneg_Yneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bneg_Young)]))
-Down_Oneg_Yneg <- filter(Down_Oneg_Yneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bneg_Young)]))
-Diff_Oneg_Yneg <- filter(Diff_Oneg_Yneg, Location %in% c(Up_Oneg_Yneg$Location, Down_Oneg_Yneg$Location))
+Up_Oneg_Jneg <- filter(Up_Oneg_Jneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bneg_Juvenile)]))
+Down_Oneg_Jneg <- filter(Down_Oneg_Jneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bneg_Juvenile)]))
+Diff_Oneg_Jneg <- filter(Diff_Oneg_Jneg, Location %in% c(Up_Oneg_Jneg$Location, Down_Oneg_Jneg$Location))
 
-Up_Opos_Ypos <- filter(Up_Opos_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bpos_Young)]))
-Down_Opos_Ypos <- filter(Down_Opos_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bpos_Young)]))
-Diff_Opos_Ypos <- filter(Diff_Opos_Ypos, Location %in% c(Up_Opos_Ypos$Location, Down_Opos_Ypos$Location))
+Up_Opos_Jpos <- filter(Up_Opos_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bpos_Juvenile)]))
+Down_Opos_Jpos <- filter(Down_Opos_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Old,peaks_found_in_CD49bpos_Juvenile)]))
+Diff_Opos_Jpos <- filter(Diff_Opos_Jpos, Location %in% c(Up_Opos_Jpos$Location, Down_Opos_Jpos$Location))
 
-Diff_merged_Y_O <- filter(Diff_merged_Y_O, Location %in% c(Diff_Oneg_Yneg$Location, Diff_Opos_Ypos$Location))
-Up_merged_O_Y <- filter(Up_merged_O_Y, Location %in% c(Up_Oneg_Yneg$Location, Up_Opos_Ypos$Location))
-Down_merged_O_Y <- filter(Down_merged_O_Y, Location %in% c(Down_Oneg_Yneg$Location, Down_Opos_Ypos$Location))
+Diff_merged_J_O <- filter(Diff_merged_J_O, Location %in% c(Diff_Oneg_Jneg$Location, Diff_Opos_Jpos$Location))
+Up_merged_O_J <- filter(Up_merged_O_J, Location %in% c(Up_Oneg_Jneg$Location, Up_Opos_Jpos$Location))
+Down_merged_O_J <- filter(Down_merged_O_J, Location %in% c(Down_Oneg_Jneg$Location, Down_Opos_Jpos$Location))
 
 # Extremes
-Up_Oneg_Ypos <- filter(Up_Oneg_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bpos_Young)]))
-Down_Oneg_Ypos <- filter(Down_Oneg_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bpos_Young)]))
-Diff_Oneg_Ypos<- filter(Diff_Oneg_Ypos, Location %in% c(Up_Oneg_Ypos$Location, Down_Oneg_Ypos$Location))
+Up_Oneg_Jpos <- filter(Up_Oneg_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bpos_Juvenile)]))
+Down_Oneg_Jpos <- filter(Down_Oneg_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Old,peaks_found_in_CD49bpos_Juvenile)]))
+Diff_Oneg_Jpos<- filter(Diff_Oneg_Jpos, Location %in% c(Up_Oneg_Jpos$Location, Down_Oneg_Jpos$Location))
 ```
 
-# Comparing Old vs. Young HSCs
+# Comparing Old vs. Juvenile HSCs
 
 ```{r Function_reordered_heatmap}
 # Function to make a heatmap with reordered clusters
@@ -372,88 +371,88 @@ Heat_map_with_row_annotation_reordered <- function(df, annotation, basic, row_an
 Figure 5c-d
 Supplementary Figure S8f
 
-```{r Y_O_Heatmap}
-rowannotation_Q_Age <- data_frame(CD49bneg = ifelse(Diff_merged_Y_O$Location %in% Diff_Oneg_Yneg$Location, "TRUE", "FALSE"),
-                                  CD49bpos = ifelse(Diff_merged_Y_O$Location %in% Diff_Opos_Ypos$Location, "TRUE", "FALSE"))
+```{r J_O_Heatmap}
+rowannotation_Q_Age <- data_frame(CD49bneg = ifelse(Diff_merged_J_O$Location %in% Diff_Oneg_Jneg$Location, "TRUE", "FALSE"),
+                                  CD49bpos = ifelse(Diff_merged_J_O$Location %in% Diff_Opos_Jpos$Location, "TRUE", "FALSE"))
 
 # Heatmap
-Diff_merged_Y_O_heatmap <- Diff_merged_Y_O[,i_main_df] %>%
+Diff_merged_J_O_heatmap <- Diff_merged_J_O[,i_main_df] %>%
     Row_norm(annotation[i_main,], basic) %>%
     Heat_map_with_row_annotation_reordered(annotation[i_main,], basic, rowannotation_Q_Age,
-                                           "Differentially accessible regions between Young vs. Old - padj<0.0001",
+                                           "Differentially accessible regions between Juvenile vs. Old - padj<0.0001",
                                            rownames = FALSE, xcluster = FALSE,
                                            colours_Celltypes = colours_Celltypes[1:2], colours_Age = colours_Age)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Heatmap_Diff_YoungvsOld_mainPopulations_reordered.eps", width=10, height=6)
-  print(Diff_merged_Y_O_heatmap)
+postscript("../plots/ATACseq_analysis/5c_Heatmap_Diff_JuvenilevsOld_mainPopulations_reordered.eps", width=10, height=6)
+  print(Diff_merged_J_O_heatmap)
 dev.off()
 
 # Heatmap including LMPP and GMP
-Diff_merged_Y_O %>%
+Diff_merged_J_O %>%
   Row_norm(annotation, basic) %>%
-  Heat_map(annotation, basic, "Differentially accessible regions between Young vs. Old - padj<0.0001",
+  Heat_map(annotation, basic, "Differentially accessible regions between Juvenile vs. Old - padj<0.0001",
            rownames = TRUE, ycluster = FALSE, xcluster = FALSE, colours_Celltypes = colours_Celltypes,
-           colours_Age = colours_Age, my_row_order = Diff_merged_Y_O_heatmap$tree_row$order)
+           colours_Age = colours_Age, my_row_order = Diff_merged_J_O_heatmap$tree_row$order)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Heatmap_Diff_YoungvsOld_allPopulations_reordered.eps", width=10, height=6)
-  Diff_merged_Y_O %>%
+postscript("../plots/ATACseq_analysis/S8f_Heatmap_Diff_JuvenilevsOld_allPopulations_reordered.eps", width=10, height=6)
+  Diff_merged_J_O %>%
   Row_norm(annotation, basic) %>%
-  Heat_map(annotation, basic, "Differentially accessible regions between Young vs. Old - padj<0.0001",
+  Heat_map(annotation, basic, "Differentially accessible regions between Juvenile vs. Old - padj<0.0001",
            rownames = TRUE, ycluster = FALSE, xcluster = FALSE, colours_Celltypes = colours_Celltypes,
-           colours_Age = colours_Age, my_row_order = Diff_merged_Y_O_heatmap$tree_row$order)
+           colours_Age = colours_Age, my_row_order = Diff_merged_J_O_heatmap$tree_row$order)
 dev.off()
 
-# Divide the Young vs. Old heatmap into clusters
+# Divide the Juvenile vs. Old heatmap into clusters
 n_clust <- 3
-my_pos_list <- divide_into_clust(Diff_merged_Y_O_heatmap, n_clust, Diff_merged_Y_O)
+my_pos_list <- divide_into_clust(Diff_merged_J_O_heatmap, n_clust, Diff_merged_J_O)
 
 # Make boxplot for each cluster
-Diff_merged_Y_O_main <- Diff_merged_Y_O[,i_main_df]
+Diff_merged_J_O_main <- Diff_merged_J_O[,i_main_df]
 annotation_main_AllAge <- annotation %>% filter(Cell_type %in% c("CD49bneg","CD49bpos"))
 
-box_and_whiskers(Diff_merged_Y_O_main[my_pos_list[["clust1"]],], annotation_main_AllAge,
+box_and_whiskers(Diff_merged_J_O_main[my_pos_list[["clust1"]],], annotation_main_AllAge,
                  basic, 0.7, 1.4, "Cluster 1", groups = "Age")
-box_and_whiskers(Diff_merged_Y_O_main[my_pos_list[["clust2"]],], annotation_main_AllAge,
+box_and_whiskers(Diff_merged_J_O_main[my_pos_list[["clust2"]],], annotation_main_AllAge,
                  basic, 0.7, 1.4, "Cluster 2", groups = "Age")
-box_and_whiskers(Diff_merged_Y_O_main[my_pos_list[["clust3"]],], annotation_main_AllAge,
+box_and_whiskers(Diff_merged_J_O_main[my_pos_list[["clust3"]],], annotation_main_AllAge,
                  basic, 0.7, 1.4, "Cluster 3", groups = "Age")
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Boxplot_Heatmap_Diff_YoungvsOld_mainPopulations_cluster1of3.eps", width = 4.5, height = 3)
-box_and_whiskers(Diff_merged_Y_O_main[my_pos_list[["clust1"]],], annotation_main_AllAge,
+postscript("../plots/ATACseq_analysis/5c_Boxplot_Heatmap_Diff_JuvenilevsOld_mainPopulations_cluster1of3.eps", width = 4.5, height = 3)
+box_and_whiskers(Diff_merged_J_O_main[my_pos_list[["clust1"]],], annotation_main_AllAge,
                  basic, 0.7, 1.4, "Cluster 1", groups = "Age")
 dev.off()
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Boxplot_Heatmap_Diff_YoungvsOld_mainPopulations_cluster2of3.eps", width = 4.5, height = 3)
-box_and_whiskers(Diff_merged_Y_O_main[my_pos_list[["clust2"]],], annotation_main_AllAge,
+postscript("../plots/ATACseq_analysis/5c_Boxplot_Heatmap_Diff_JuvenilevsOld_mainPopulations_cluster2of3.eps", width = 4.5, height = 3)
+box_and_whiskers(Diff_merged_J_O_main[my_pos_list[["clust2"]],], annotation_main_AllAge,
                  basic, 0.7, 1.4, "Cluster 2", groups = "Age")
 dev.off()
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Boxplot_Heatmap_Diff_YoungvsOld_mainPopulations_cluster3of3.eps", width = 4.5, height = 3)
-box_and_whiskers(Diff_merged_Y_O_main[my_pos_list[["clust3"]],], annotation_main_AllAge,
+postscript("../plots/ATACseq_analysis/5c_Boxplot_Heatmap_Diff_JuvenilevsOld_mainPopulations_cluster3of3.eps", width = 4.5, height = 3)
+box_and_whiskers(Diff_merged_J_O_main[my_pos_list[["clust3"]],], annotation_main_AllAge,
                  basic, 0.7, 1.4, "Cluster 3", groups = "Age")
 dev.off()
 
 # Making bar graphs for the peaks found
-peaks_found_in_CD150hi_Young <- unique(c(peaks_found_in_CD49bneg_Young, peaks_found_in_CD49bpos_Young))
+peaks_found_in_CD150hi_Juvenile <- unique(c(peaks_found_in_CD49bneg_Juvenile, peaks_found_in_CD49bpos_Juvenile))
 peaks_found_in_CD150hi_Adult <- unique(c(peaks_found_in_CD49bneg_Adult, peaks_found_in_CD49bpos_Adult))
 peaks_found_in_CD150hi_Old <- unique(c(peaks_found_in_CD49bneg_Old, peaks_found_in_CD49bpos_Old))
 
 for (i in 1:n_clust){
-  a1 <- Diff_merged_Y_O_main[my_pos_list[[paste0("clust",i)]],] %>% nrow() %>% print()
-  a2 <- Diff_merged_Y_O_main[my_pos_list[[paste0("clust",i)]],] %>%
-    filter(Location %in% df_RPKM$Location[peaks_found_in_CD150hi_Young]) %>% nrow() %>% print()
-  a3 <- Diff_merged_Y_O_main[my_pos_list[[paste0("clust",i)]],] %>%
+  a1 <- Diff_merged_J_O_main[my_pos_list[[paste0("clust",i)]],] %>% nrow() %>% print()
+  a2 <- Diff_merged_J_O_main[my_pos_list[[paste0("clust",i)]],] %>%
+    filter(Location %in% df_RPKM$Location[peaks_found_in_CD150hi_Juvenile]) %>% nrow() %>% print()
+  a3 <- Diff_merged_J_O_main[my_pos_list[[paste0("clust",i)]],] %>%
     filter(Location %in% df_RPKM$Location[peaks_found_in_CD150hi_Adult]) %>% nrow() %>% print()
-  a4 <- Diff_merged_Y_O_main[my_pos_list[[paste0("clust",i)]],] %>%
+  a4 <- Diff_merged_J_O_main[my_pos_list[[paste0("clust",i)]],] %>%
     filter(Location %in% df_RPKM$Location[peaks_found_in_CD150hi_Old]) %>% nrow() %>% print()
   
   PF <- data_frame(
-    Age = factor(c("Young","Adult","Old"),levels=c("Young","Adult","Old")),
+    Age = factor(c("Juvenile","Adult","Old"),levels=c("Juvenile","Adult","Old")),
     Peaks_found = c(a2/a1*100,a3/a1*100,a4/a1*100),
     Peaks_not_found = c((a1-a2)/a1*100,(a1-a3)/a1*100,(a1-a4)/a1*100)) %>%
     melt()
@@ -469,7 +468,7 @@ for (i in 1:n_clust){
     scale_y_continuous(expand = c(0, 0))
   
   setEPS()
-  postscript(paste0("../plots/ATACseq_analysis/Bargraph_Heatmap_Diff_YoungvsOld_mainPopulations_cluster",i,"of",n_clust,".eps"), width = 3, height = 2)
+  postscript(paste0("../plots/ATACseq_analysis/5c_Bargraph_Heatmap_Diff_JuvenilevsOld_mainPopulations_cluster",i,"of",n_clust,".eps"), width = 3, height = 2)
     print(p)
   dev.off()
 }
@@ -477,16 +476,16 @@ for (i in 1:n_clust){
 
 ## Make bed files and tables for peaks
 
-```{r Y_O_write_bed_table}
+```{r J_O_write_bed_table}
 for (i in 1:n_clust){
-  write.table(Diff_merged_Y_O_main[my_pos_list[[paste0("clust",i)]],c("Chr", "Start", "End", "Location")],
-              file = paste0("../output_files/ATACseq_analysis/Diff_merged_Y_O_main_clust",i,"_of_",n_clust,".bed"),
+  write.table(Diff_merged_J_O_main[my_pos_list[[paste0("clust",i)]],c("Chr", "Start", "End", "Location")],
+              file = paste0("../output_files/ATACseq_analysis/Diff_merged_J_O_main_clust",i,"_of_",n_clust,".bed"),
               quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 }
 
 for (i in 1:n_clust){
-    write.table(Diff_merged_Y_O_main[my_pos_list[[paste0("clust",i)]],c("Chr", "Start", "End", "Gene.Name")],
-                file = paste0("../output_files/ATACseq_analysis/Diff_merged_Y_O_main_clust",i,"_of_",n_clust,".txt"),
+    write.table(Diff_merged_J_O_main[my_pos_list[[paste0("clust",i)]],c("Chr", "Start", "End", "Gene.Name")],
+                file = paste0("../output_files/ATACseq_analysis/Diff_merged_J_O_main_clust",i,"_of_",n_clust,".txt"),
                 quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 }
 ```
@@ -494,13 +493,13 @@ for (i in 1:n_clust){
 ## Gene onthology analysis with GREAT
 Figure 5e
 
-```{r Y_O_GREAT}
+```{r J_O_GREAT}
 INTERESTING_GREAT_GO <- c("GO Biological Process")
-great_input_files=c("Diff_merged_Y_O_main_clust1_of_3.bed","Diff_merged_Y_O_main_clust2_of_3.bed", "Diff_merged_Y_O_main_clust3_of_3.bed")
+great_input_files=c("Diff_merged_J_O_main_clust1_of_3.bed","Diff_merged_J_O_main_clust2_of_3.bed", "Diff_merged_J_O_main_clust3_of_3.bed")
 GREAT_plot_clusters <- GREAT_analysis(INTERESTING_GREAT_GO, great_input_files, skip = TRUE, topn = 5)
 
 setEPS()
-postscript(paste0("../plots/ATACseq_analysis/GREAT_Diff_YoungvsOld_mainPopulations_3clusters_GO_Biological_Process.eps"), width = 10, height = 10)
+postscript(paste0("../plots/ATACseq_analysis/5e_GREAT_Diff_JuvenilevsOld_mainPopulations_3clusters_GO_Biological_Process.eps"), width = 10, height = 10)
   print(GREAT_plot_clusters[["GO Biological Process"]])
 dev.off()
 ```
@@ -508,28 +507,28 @@ dev.off()
 ## Motiv enrichment (based on data from HOMER findMotifsGenome.pl)
 Figure 5f
 
-```{r Y_O_motif_enrichment}
+```{r J_O_motif_enrichment}
 ME_list <- list()
-  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_merged_Y_O_main_clust1_of_3_MACS_knownResults.txt"),header=TRUE, sep = "\t")
+  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_merged_J_O_main_clust1_of_3_MACS_knownResults.txt"),header=TRUE, sep = "\t")
   ME_list <- ME_list %>% append(list(temp))
-  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_merged_Y_O_main_clust2_of_3_MACS_knownResults.txt"),header=TRUE, sep = "\t")
+  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_merged_J_O_main_clust2_of_3_MACS_knownResults.txt"),header=TRUE, sep = "\t")
   ME_list <- ME_list %>% append(list(temp))
-  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_merged_Y_O_main_clust3_of_3_MACS_knownResults.txt"),header=TRUE, sep = "\t")
+  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_merged_J_O_main_clust3_of_3_MACS_knownResults.txt"),header=TRUE, sep = "\t")
   ME_list <- ME_list %>% append(list(temp))
 
 motif_plots(ME_list, logp_min = 50, logp_max = 500)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Motif_enrichment_Diff_YoungvsOld_mainPopulations_3clusters_minlogp50_maxlop500.eps", width = 10, height = 5)
+postscript("../plots/ATACseq_analysis/5f_Motif_enrichment_Diff_JuvenilevsOld_mainPopulations_3clusters_minlogp50_maxlop500.eps", width = 10, height = 5)
   motif_plots(ME_list, logp_min = 50, logp_max = 500)
 dev.off()
 ```
 
-# Comparing Adult vs. Young HSCs
+# Comparing Adult vs. Juvenile HSCs
 
 ## Differential analysis - Pairwise comparisons Age and celltype without Old
 
-```{r Differential_Y_A_1, message=FALSE}
+```{r Differential_J_A_1, message=FALSE}
 df_raw_filtered_no_old_main <- df_raw_filtered[,i_main_df]
 annotation_no_old_main <- annotation[i_main,]
 df_raw_filtered_no_old_main <- df_raw_filtered_no_old_main[,c(1:length(basic),(length(basic)+which(annotation_no_old_main$Age != "Old")))]
@@ -538,75 +537,75 @@ annotation_no_old_main <- annotation_no_old_main[which(annotation_no_old_main$Ag
 My_DESeq_no_old_main <- DESeq2(df_raw_filtered_no_old_main, annotation_no_old_main, basic, GroupCol = "AgeCelltype")
 ```
 
-```{r Differential_Y_A_2}
+```{r Differential_J_A_2}
 p_max_Age <- 0.0001
 
 df_DESeq2_no_old_main <- df_LQT
 
-# Young Adult vs Young
-df_DESeq2_no_old_main <- Pairwise_differential(My_DESeq_no_old_main, df_DESeq2_no_old_main, "Adult_CD49bneg", "Young_CD49bneg", Groupcol = "AgeCelltype", p_max = p_max_Age)
-Diff_Aneg_Yneg <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bneg","Young_CD49bneg", p_max_Age, dir = "both")
-Diff_Apos_Ypos <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bpos","Young_CD49bpos", p_max_Age, dir = "both")
-Up_Aneg_Yneg <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bneg","Young_CD49bneg", p_max_Age, dir = "up")
-Up_Apos_Ypos <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bpos","Young_CD49bpos", p_max_Age, dir = "up")
-Down_Aneg_Yneg <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bneg","Young_CD49bneg", p_max_Age, dir = "down")
-Down_Apos_Ypos <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bpos","Young_CD49bpos", p_max_Age, dir = "down")
-Diff_merged_Y_A <- df_DESeq2_no_old_main[unique(c(rownames(Diff_Aneg_Yneg), rownames(Diff_Apos_Ypos))),]
-Up_merged_A_Y <- df_DESeq2_no_old_main[unique(c(rownames(Up_Aneg_Yneg), rownames(Up_Apos_Ypos))),]
-Down_merged_A_Y <- df_DESeq2_no_old_main[unique(c(rownames(Down_Aneg_Yneg), rownames(Down_Apos_Ypos))),]
+# Adult vs Juvenile
+df_DESeq2_no_old_main <- Pairwise_differential(My_DESeq_no_old_main, df_DESeq2_no_old_main, "Adult_CD49bneg", "Juvenile_CD49bneg", Groupcol = "AgeCelltype", p_max = p_max_Age)
+Diff_Aneg_Jneg <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bneg","Juvenile_CD49bneg", p_max_Age, dir = "both")
+Diff_Apos_Jpos <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bpos","Juvenile_CD49bpos", p_max_Age, dir = "both")
+Up_Aneg_Jneg <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bneg","Juvenile_CD49bneg", p_max_Age, dir = "up")
+Up_Apos_Jpos <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bpos","Juvenile_CD49bpos", p_max_Age, dir = "up")
+Down_Aneg_Jneg <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bneg","Juvenile_CD49bneg", p_max_Age, dir = "down")
+Down_Apos_Jpos <- find_up_down(df_DESeq2_no_old_main, "Adult_CD49bpos","Juvenile_CD49bpos", p_max_Age, dir = "down")
+Diff_merged_J_A <- df_DESeq2_no_old_main[unique(c(rownames(Diff_Aneg_Jneg), rownames(Diff_Apos_Jpos))),]
+Up_merged_A_J <- df_DESeq2_no_old_main[unique(c(rownames(Up_Aneg_Jneg), rownames(Up_Apos_Jpos))),]
+Down_merged_A_J <- df_DESeq2_no_old_main[unique(c(rownames(Down_Aneg_Jneg), rownames(Down_Apos_Jpos))),]
 ```
 
 ## Filter out those diff peaks that are not found in either compared population
 
-```{r Differential_Y_A_3}
+```{r Differential_J_A_3}
 # By age
-Up_Aneg_Yneg <- filter(Up_Aneg_Yneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Adult,peaks_found_in_CD49bneg_Young)]))
-Up_Apos_Ypos <- filter(Up_Apos_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Adult,peaks_found_in_CD49bpos_Young)]))
-Down_Aneg_Yneg <- filter(Down_Aneg_Yneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Adult,peaks_found_in_CD49bneg_Young)]))
-Down_Apos_Ypos <- filter(Down_Apos_Ypos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Adult,peaks_found_in_CD49bpos_Young)]))
-Diff_Aneg_Yneg <- filter(Diff_Aneg_Yneg, Location %in% c(Up_Aneg_Yneg$Location, Down_Aneg_Yneg$Location))
-Diff_Apos_Ypos <- filter(Diff_Apos_Ypos, Location %in% c(Up_Apos_Ypos$Location, Down_Apos_Ypos$Location))
-Diff_merged_Y_A <- filter(Diff_merged_Y_A, Location %in% c(Diff_Apos_Ypos$Location, Diff_Aneg_Yneg$Location))
-Up_merged_A_Y <- filter(Up_merged_A_Y, Location %in% c(Up_Aneg_Yneg$Location, Up_Apos_Ypos$Location))
-Down_merged_A_Y <- filter(Down_merged_A_Y, Location %in% c(Down_Aneg_Yneg$Location, Down_Apos_Ypos$Location))
+Up_Aneg_Jneg <- filter(Up_Aneg_Jneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Adult,peaks_found_in_CD49bneg_Juvenile)]))
+Up_Apos_Jpos <- filter(Up_Apos_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Adult,peaks_found_in_CD49bpos_Juvenile)]))
+Down_Aneg_Jneg <- filter(Down_Aneg_Jneg, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bneg_Adult,peaks_found_in_CD49bneg_Juvenile)]))
+Down_Apos_Jpos <- filter(Down_Apos_Jpos, Location %in% c(df_RPKM$Location[c(peaks_found_in_CD49bpos_Adult,peaks_found_in_CD49bpos_Juvenile)]))
+Diff_Aneg_Jneg <- filter(Diff_Aneg_Jneg, Location %in% c(Up_Aneg_Jneg$Location, Down_Aneg_Jneg$Location))
+Diff_Apos_Jpos <- filter(Diff_Apos_Jpos, Location %in% c(Up_Apos_Jpos$Location, Down_Apos_Jpos$Location))
+Diff_merged_J_A <- filter(Diff_merged_J_A, Location %in% c(Diff_Apos_Jpos$Location, Diff_Aneg_Jneg$Location))
+Up_merged_A_J <- filter(Up_merged_A_J, Location %in% c(Up_Aneg_Jneg$Location, Up_Apos_Jpos$Location))
+Down_merged_A_J <- filter(Down_merged_A_J, Location %in% c(Down_Aneg_Jneg$Location, Down_Apos_Jpos$Location))
 ```
 
-## Compare peaks diff in Young vs Old and Young vs Young adult
+## Compare peaks diff in Juvenile vs Old and Juvenile vs Adult
 Figure 5g
 
-```{r Y_A_Venn_bed}
+```{r J_A_Venn_bed}
 # VENN diagram
 setEPS()
-postscript("../plots/ATACseq_analysis/Venn_DiffCD150hi_YvsYA_YvsO.eps", width = 6, height = 6, fonts = "serif")
-  grid.draw(vennplt(Diff_merged_Y_A$Location, Diff_merged_Y_O$Location, categories = c("Adult","Old")))
+postscript("../plots/ATACseq_analysis/5g_Venn_DiffCD150hi_JvsA_JvsO.eps", width = 6, height = 6, fonts = "serif")
+  grid.draw(vennplt(Diff_merged_J_A$Location, Diff_merged_J_O$Location, categories = c("Adult","Old")))
 dev.off()
 
 # Write bed file for overlapping regions up and down
-df_Up_Adult_O_vs_Y <- Up_merged_A_Y[Up_merged_A_Y$Location %in% intersect(Up_merged_O_Y$Location, Up_merged_A_Y$Location),]
-df_Down_Adult_O_vs_Y <- Down_merged_A_Y[Down_merged_A_Y$Location %in% intersect(Down_merged_O_Y$Location, Down_merged_A_Y$Location),]
+df_Up_Adult_O_vs_J <- Up_merged_A_J[Up_merged_A_J$Location %in% intersect(Up_merged_O_J$Location, Up_merged_A_J$Location),]
+df_Down_Adult_O_vs_J <- Down_merged_A_J[Down_merged_A_J$Location %in% intersect(Down_merged_O_J$Location, Down_merged_A_J$Location),]
 
-write.table(df_Up_Adult_O_vs_Y[,c("Chr", "Start", "End", "Location")],
-            file = "../output_files/ATACseq_analysis/overlapping_Up_YA_O_vs_Y.bed",
+write.table(df_Up_Adult_O_vs_J[,c("Chr", "Start", "End", "Location")],
+            file = "../output_files/ATACseq_analysis/overlapping_Up_A_O_vs_J.bed",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
-write.table(df_Down_Adult_O_vs_Y[,c("Chr", "Start", "End", "Location")],
-            file = "../output_files/ATACseq_analysis/overlapping_Down_YA_O_vs_Y.bed",
+write.table(df_Down_Adult_O_vs_J[,c("Chr", "Start", "End", "Location")],
+            file = "../output_files/ATACseq_analysis/overlapping_Down_A_O_vs_J.bed",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 ```
 
-## Motiv enrichment (based on data from HOMER findMotifsGenome.pl) on overlapping peaks in Y vs. Adult and Y vs. O
+## Motiv enrichment (based on data from HOMER findMotifsGenome.pl) on overlapping peaks in Juvenile vs. Adult and Juvenile vs. Old
 Figure 5h
 
-```{r Y_A_motif_enrichment}
+```{r J_A_motif_enrichment}
 ME_list <- list()
-  temp <- read.delim(paste0("../output_files/Motif_enrichment/overlapping_Down_YA_O_vs_Y_knownResults.txt"), header = TRUE, sep = "\t")
+  temp <- read.delim(paste0("../output_files/Motif_enrichment/overlapping_Down_A_O_vs_J_knownResults.txt"), header = TRUE, sep = "\t")
   ME_list <- ME_list %>% append(list(temp))
-  temp <- read.delim(paste0("../output_files/Motif_enrichment/overlapping_Up_YA_O_vs_Y_knownResults.txt"), header = TRUE, sep = "\t")
+  temp <- read.delim(paste0("../output_files/Motif_enrichment/overlapping_Up_A_O_vs_J_knownResults.txt"), header = TRUE, sep = "\t")
   ME_list <- ME_list %>% append(list(temp))
 
 motif_plots(ME_list, logp_min = 10, logp_max = 100)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Motif_enrichment_overlapping_YvsYA_YvsO_minlogp10_maxlop100.eps", width = 10, height = 5)
+postscript("../plots/ATACseq_analysis/5h_Motif_enrichment_overlapping_JvsA_JvsO_minlogp10_maxlop100.eps", width = 10, height = 5)
   motif_plots(ME_list, logp_min = 10, logp_max = 100)
 dev.off()
 ```
@@ -626,7 +625,7 @@ Diff_Oneg_Opos[,i_main_df] %>%
            colours_Celltypes = colours_Celltypes[1:2], colours_Age = colours_Age)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Heatmap_Diff_CD49bnegvspos_old_mainPopulations.eps", width = 8, height = 12)
+postscript("../plots/ATACseq_analysis/6a_Heatmap_Diff_CD49bnegvspos_old_mainPopulations.eps", width = 8, height = 12)
   Diff_Oneg_Opos[,i_main_df] %>%
     Row_norm(annotation[i_main,], basic) %>%
     Heat_map(annotation[i_main,], basic,
@@ -635,20 +634,20 @@ postscript("../plots/ATACseq_analysis/Heatmap_Diff_CD49bnegvspos_old_mainPopulat
              colours_Celltypes = colours_Celltypes[1:2], colours_Age = colours_Age, fixed_height = TRUE)
 dev.off()
 
-# Heatmap for young HSCs
-Diff_Yneg_Ypos[,i_main_df] %>%
+# Heatmap for juvenile HSCs
+Diff_Jneg_Jpos[,i_main_df] %>%
   Row_norm(annotation[i_main,], basic) %>%
   Heat_map(annotation[i_main,], basic,
-           "Differentially accessible regions between CD49bneg vs. CD49bpos in young mice- padj<0.05",
+           "Differentially accessible regions between CD49bneg vs. CD49bpos in juvenile mice- padj<0.05",
            rownames = FALSE, ycluster = TRUE, xcluster = FALSE,
            colours_Celltypes = colours_Celltypes[1:2], colours_Age = colours_Age)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Heatmap_DiffCD49bnegvspos_young_mainPopulations.eps", width = 8, height = 6)
-Diff_Yneg_Ypos[,i_main_df] %>%
+postscript("../plots/ATACseq_analysis/6a_Heatmap_DiffCD49bnegvspos_juvenile_mainPopulations.eps", width = 8, height = 6)
+Diff_Jneg_Jpos[,i_main_df] %>%
   Row_norm(annotation[i_main,], basic) %>%
   Heat_map(annotation[i_main,], basic,
-           "Differentially accessible regions between CD49bneg vs. CD49bpos in young mice- padj<0.05",
+           "Differentially accessible regions between CD49bneg vs. CD49bpos in juvenile mice- padj<0.05",
            rownames = FALSE, ycluster = TRUE, xcluster = FALSE,
            colours_Celltypes = colours_Celltypes[1:2], colours_Age = colours_Age, fixed_height = TRUE)
 dev.off()
@@ -664,11 +663,11 @@ write.table(Up_Oneg_Opos[,c("Chr", "Start", "End", "Location")],
             file = "../output_files/ATACseq_analysis/Up_Oneg_Opos.bed",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 
-write.table(Up_Yneg_Ypos[,c("Chr", "Start", "End", "Location", "Gene.Name", "padj_Young_CD49bneg_vs_Young_CD49bpos", "log2FoldChange_Young_CD49bneg_vs_Young_CD49bpos")],
-            file = "../output_files/ATACseq_analysis/Up_Yneg_Ypos.txt",
+write.table(Up_Jneg_Jpos[,c("Chr", "Start", "End", "Location", "Gene.Name", "padj_Juvenile_CD49bneg_vs_Juvenile_CD49bpos", "log2FoldChange_Juvenile_CD49bneg_vs_Juvenile_CD49bpos")],
+            file = "../output_files/ATACseq_analysis/Up_Jneg_Jpos.txt",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
-write.table(Up_Yneg_Ypos[,c("Chr", "Start", "End", "Location")],
-            file = "../output_files/ATACseq_analysis/Up_Yneg_Ypos.bed",
+write.table(Up_Jneg_Jpos[,c("Chr", "Start", "End", "Location")],
+            file = "../output_files/ATACseq_analysis/Up_Jneg_Jpos.bed",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 
 write.table(Down_Oneg_Opos[,c("Chr", "Start", "End", "Location", "Gene.Name", "padj_Old_CD49bneg_vs_Old_CD49bpos", "log2FoldChange_Old_CD49bneg_vs_Old_CD49bpos")],
@@ -678,11 +677,11 @@ write.table(Down_Oneg_Opos[,c("Chr", "Start", "End", "Location")],
             file = "../output_files/ATACseq_analysis/Down_Oneg_Opos.bed",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 
-write.table(Down_Yneg_Ypos[,c("Chr", "Start", "End", "Location", "Gene.Name", "padj_Young_CD49bneg_vs_Young_CD49bpos", "log2FoldChange_Young_CD49bneg_vs_Young_CD49bpos")],
-            file = "../output_files/ATACseq_analysis/Down_Yneg_Ypos.txt",
+write.table(Down_Jneg_Jpos[,c("Chr", "Start", "End", "Location", "Gene.Name", "padj_Juvenile_CD49bneg_vs_Juvenile_CD49bpos", "log2FoldChange_Juvenile_CD49bneg_vs_Juvenile_CD49bpos")],
+            file = "../output_files/ATACseq_analysis/Down_Jneg_Jpos.txt",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
-write.table(Down_Yneg_Ypos[,c("Chr", "Start", "End", "Location")],
-            file = "../output_files/ATACseq_analysis/Down_Yneg_Ypos.bed",
+write.table(Down_Jneg_Jpos[,c("Chr", "Start", "End", "Location")],
+            file = "../output_files/ATACseq_analysis/Down_Jneg_Jpos.bed",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 ```
 
@@ -691,38 +690,38 @@ Figure 6b
 
 ```{r Neg_Pos_GREAT}
 INTERESTING_GREAT_GO <- c("GO Biological Process")
-great_input_files <- c("Up_Oneg_Opos.bed","Up_Yneg_Ypos.bed","Down_Oneg_Opos.bed","Down_Yneg_Ypos.bed")
+great_input_files <- c("Up_Oneg_Opos.bed","Up_Jneg_Jpos.bed","Down_Oneg_Opos.bed","Down_Jneg_Jpos.bed")
 GREAT_plot_CD49bpos_vs_CD49bneg <- GREAT_analysis(INTERESTING_GREAT_GO, great_input_files, skip = TRUE, topn = 10)
 
 setEPS()
-postscript(paste0("../plots/ATACseq_analysis/GREAT_Diff_CD49bnegvspos_GO_Biological_Process.eps"), width = 15, height = 15)
+postscript(paste0("../plots/ATACseq_analysis/6b_GREAT_Diff_CD49bnegvspos_GO_Biological_Process.eps"), width = 15, height = 15)
   print(GREAT_plot_CD49bpos_vs_CD49bneg[["GO Biological Process"]]) 
 dev.off()
 ```
 
-# Comparing extremes (Y_CD49b+ vs. O_CD49b-) 
+# Comparing extremes (J_CD49b+ vs. O_CD49b-) 
 All regions overlapping with aging question are removed
 
-## Heatmap with YA included
+## Heatmap with Adult included
 Figure 6d
 
 ```{r Extremes_Heatmap}
-Diff_Oneg_Ypos_subtracted <- df_DESeq2[setdiff(rownames(Diff_Oneg_Ypos), rownames(Diff_merged_Y_O)),]
+Diff_Oneg_Jpos_subtracted <- df_DESeq2[setdiff(rownames(Diff_Oneg_Jpos), rownames(Diff_merged_J_O)),]
 
 # Heatmap comparing extremes
-i_main_no_Adult <- which(annotation$AgeCelltype == "Old_CD49bneg" | annotation$AgeCelltype == "Old_CD49bpos" | annotation$AgeCelltype == "Young_CD49bneg" | annotation$AgeCelltype == "Young_CD49bpos")
+i_main_no_Adult <- which(annotation$AgeCelltype == "Old_CD49bneg" | annotation$AgeCelltype == "Old_CD49bpos" | annotation$AgeCelltype == "Juvenile_CD49bneg" | annotation$AgeCelltype == "Juvenile_CD49bpos")
 i_main_df_no_Adult <- c(1:length(basic), length(basic) + i_main_no_Adult)
 
-i_main_with_Adult <- which(annotation$AgeCelltype == "Old_CD49bneg" | annotation$AgeCelltype == "Old_CD49bpos" | annotation$AgeCelltype == "Young_CD49bneg" | annotation$AgeCelltype == "Young_CD49bpos" | annotation$AgeCelltype == "Adult_CD49bneg" | annotation$AgeCelltype == "Adult_CD49bpos")
+i_main_with_Adult <- which(annotation$AgeCelltype == "Old_CD49bneg" | annotation$AgeCelltype == "Old_CD49bpos" | annotation$AgeCelltype == "Juvenile_CD49bneg" | annotation$AgeCelltype == "Juvenile_CD49bpos" | annotation$AgeCelltype == "Adult_CD49bneg" | annotation$AgeCelltype == "Adult_CD49bpos")
 i_main_df_with_Adult <- c(1:length(basic), length(basic) + i_main_with_Adult)
 
 annotation_main_withAdult <- annotation[i_main_with_Adult,]
-Diff_Oneg_Ypos_subtracted_main <- Diff_Oneg_Ypos_subtracted[,i_main_df_with_Adult]
+Diff_Oneg_Jpos_subtracted_main <- Diff_Oneg_Jpos_subtracted[,i_main_df_with_Adult]
 annotation_main_withAdult$Cell_type <- factor(annotation_main_withAdult$Cell_type, levels = c("CD49bpos","CD49bneg"))
 
-# To get the correct order of the rows (only including Y and O data)
+# To get the correct order of the rows (only including J and O data)
 temp <-
-  Diff_Oneg_Ypos_subtracted[,i_main_df_no_Adult] %>%
+  Diff_Oneg_Jpos_subtracted[,i_main_df_no_Adult] %>%
   Row_norm(annotation[i_main_no_Adult,], basic) %>%
   Heat_map(annotation[i_main_no_Adult,], basic,
            "Differentially accessible regions",
@@ -732,39 +731,39 @@ temp <-
 
 temp_heatmap_ord <- temp$tree_row$order
 
-Diff_Oneg_Ypos_subtracted_heatmap <-
-  Diff_Oneg_Ypos_subtracted_main %>%
+Diff_Oneg_Jpos_subtracted_heatmap <-
+  Diff_Oneg_Jpos_subtracted_main %>%
   Row_norm(annotation_main_withAdult, basic) %>%
   Heat_map(annotation_main_withAdult, basic,
-           "Differentially accessible regions between Old CD49bneg vs. Young CD49bpos - padj<0.0001",
+           "Differentially accessible regions between Old CD49bneg vs. Juvenile CD49bpos - padj<0.0001",
            rownames = FALSE, ycluster = FALSE, xcluster = FALSE,
            colours_Celltypes = colours_Celltypes[c(2,1)], colours_Age = colours_Age,
            order = "Age", my_row_order = temp_heatmap_ord)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Heatmap_Diff_OnegvsYpos_subtracted_OposvsYneg_with_YA.eps", width = 10, height = 6)
-  print(Diff_Oneg_Ypos_subtracted_heatmap)
+postscript("../plots/ATACseq_analysis/6d_Heatmap_Diff_OnegvsJpos_subtracted_OposvsJneg_with_Adult.eps", width = 10, height = 6)
+  print(Diff_Oneg_Jpos_subtracted_heatmap)
 dev.off()
 
 # Divide extreme heatmap into clusters
 n_clust_extreme <- 2
-my_pos_list_extreme <- divide_into_clust(temp, n_clust_extreme, Diff_Oneg_Ypos_subtracted[,i_main_df_no_Adult])
+my_pos_list_extreme <- divide_into_clust(temp, n_clust_extreme, Diff_Oneg_Jpos_subtracted[,i_main_df_no_Adult])
 
 # Make boxplots plots for clusters
-box_and_whiskers(Diff_Oneg_Ypos_subtracted_main[my_pos_list_extreme[["clust1"]],],
+box_and_whiskers(Diff_Oneg_Jpos_subtracted_main[my_pos_list_extreme[["clust1"]],],
                  annotation_main_withAdult, basic, 0.8, 1.2, "Cluster 1")
-box_and_whiskers(Diff_Oneg_Ypos_subtracted_main[my_pos_list_extreme[["clust2"]],],
+box_and_whiskers(Diff_Oneg_Jpos_subtracted_main[my_pos_list_extreme[["clust2"]],],
                  annotation_main_withAdult, basic, 0.8, 1.2, "Cluster 2")
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Boxplot_OnegvsYpos_subtracted_OposvsYneg_cluster1of2.v2.eps", width = 10, height = 6)
-box_and_whiskers(Diff_Oneg_Ypos_subtracted_main[my_pos_list_extreme[["clust1"]],],
+postscript("../plots/ATACseq_analysis/6d_Boxplot_OnegvsJpos_subtracted_OposvsJneg_cluster1of2.eps", width = 10, height = 6)
+box_and_whiskers(Diff_Oneg_Jpos_subtracted_main[my_pos_list_extreme[["clust1"]],],
                  annotation_main_withAdult, basic, 0.8, 1.2, "Cluster 1")
 dev.off()
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Boxplot_OnegvsYpos_subtracted_OposvsYneg_cluster2of2.v2.eps", width = 10, height = 6)
-box_and_whiskers(Diff_Oneg_Ypos_subtracted_main[my_pos_list_extreme[["clust2"]],],
+postscript("../plots/ATACseq_analysis/6d_Boxplot_OnegvsJpos_subtracted_OposvsJneg_cluster2of2.eps", width = 10, height = 6)
+box_and_whiskers(Diff_Oneg_Jpos_subtracted_main[my_pos_list_extreme[["clust2"]],],
                  annotation_main_withAdult, basic, 0.8, 1.2, "Cluster 2")
 dev.off()
 ```
@@ -773,14 +772,14 @@ dev.off()
 
 ```{r Extremes_write_bed_table}
 for (i in 1:n_clust_extreme){
-    write.table(Diff_Oneg_Ypos_subtracted[my_pos_list_extreme[[paste0("clust",i)]],c("Chr", "Start", "End", "Location", "Gene.Name", "padj_Old_CD49bneg_vs_Young_CD49bpos", "log2FoldChange_Old_CD49bneg_vs_Young_CD49bpos")],
-                file = paste0("../output_files/ATACseq_analysis/Oneg_Ypos_subtracted_MACS_p0.01_clust",i,"_of_",n_clust_extreme,".txt"),
+    write.table(Diff_Oneg_Jpos_subtracted[my_pos_list_extreme[[paste0("clust",i)]],c("Chr", "Start", "End", "Location", "Gene.Name", "padj_Old_CD49bneg_vs_Juvenile_CD49bpos", "log2FoldChange_Old_CD49bneg_vs_Juvenile_CD49bpos")],
+                file = paste0("../output_files/ATACseq_analysis/Oneg_Jpos_subtracted_MACS_p0.01_clust",i,"_of_",n_clust_extreme,".txt"),
                 quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 }
 
 for (i in 1:n_clust_extreme){
-    write.table(Diff_Oneg_Ypos_subtracted[my_pos_list_extreme[[paste0("clust",i)]],c("Chr", "Start", "End", "Gene.Name")],
-                file = paste0("../output_files/ATACseq_analysis/Oneg_Ypos_subtracted_MACS_p0.01_clust",i,"_of_",n_clust_extreme,".bed"),
+    write.table(Diff_Oneg_Jpos_subtracted[my_pos_list_extreme[[paste0("clust",i)]],c("Chr", "Start", "End", "Gene.Name")],
+                file = paste0("../output_files/ATACseq_analysis/Oneg_Jpos_subtracted_MACS_p0.01_clust",i,"_of_",n_clust_extreme,".bed"),
                 quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 }
 ```
@@ -791,12 +790,12 @@ Figure 6e
 ```{r Extremes_GREAT}
 #GREAT analysis for clusters
 INTERESTING_GREAT_GO <- c("GO Biological Process")
-great_input_files <- c("Oneg_Ypos_subtracted_MACS_p0.01_clust1_of_2.bed","Oneg_Ypos_subtracted_MACS_p0.01_clust2_of_2.bed")
-GREAT_plot_Diff_Oneg_Ypos_subtracted_Clusters <- GREAT_analysis(INTERESTING_GREAT_GO, great_input_files, skip = TRUE, topn = 5)
+great_input_files <- c("Oneg_Jpos_subtracted_MACS_p0.01_clust1_of_2.bed","Oneg_Jpos_subtracted_MACS_p0.01_clust2_of_2.bed")
+GREAT_plot_Diff_Oneg_Jpos_subtracted_Clusters <- GREAT_analysis(INTERESTING_GREAT_GO, great_input_files, skip = TRUE, topn = 5)
 
 setEPS()
-postscript(paste0("../plots/ATACseq_analysis/GREAT_Diff_OnegvsYpos_subtracted_OposvsYneg_Clusters_GO_Biological_Process_top5.eps"), width = 10, height = 10)
-  print(GREAT_plot_Diff_Oneg_Ypos_subtracted_Clusters[["GO Biological Process"]])
+postscript(paste0("../plots/ATACseq_analysis/6e_GREAT_Diff_OnegvsJpos_subtracted_OposvsJneg_Clusters_GO_Biological_Process_top5.eps"), width = 10, height = 10)
+  print(GREAT_plot_Diff_Oneg_Jpos_subtracted_Clusters[["GO Biological Process"]])
 dev.off()
 ```
 
@@ -805,15 +804,15 @@ Figure 6g
 
 ```{r Extremes_motif_enrichment}
 ME_list <- list()
-  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_Oneg_Ypos_subtracted3_clust1_knownResults.txt"), header = TRUE, sep = "\t")
+  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_Oneg_Jpos_subtracted_clust1_knownResults.txt"), header = TRUE, sep = "\t")
   ME_list <- ME_list %>% append(list(temp))
-  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_Oneg_Ypos_subtracted3_clust2_knownResults.txt"), header = TRUE, sep = "\t")
+  temp <- read.delim(paste0("../output_files/Motif_enrichment/Diff_Oneg_Jpos_subtracted_clust2_knownResults.txt"), header = TRUE, sep = "\t")
   ME_list <- ME_list %>% append(list(temp))
 
 motif_plots(ME_list, logp_min = 50, logp_max = 500)
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Motif_enrichment_Diff_OnegvsYpos_subtracted_Aging_minlogp50_maxlop500.eps", width = 10, height = 5)
+postscript("../plots/ATACseq_analysis/6g_Motif_enrichment_Diff_OnegvsJpos_subtracted_Aging_minlogp50_maxlop500.eps", width = 10, height = 5)
   motif_plots(ME_list, logp_min = 50, logp_max = 500)
 dev.off()
 ```

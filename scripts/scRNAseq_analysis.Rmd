@@ -95,7 +95,7 @@ my_metadata$Cell_type <- c(my_annotation$Plate.246, my_annotation$Plate.090,
                            my_annotation$Plate.093, my_annotation$Plate.ss2_22_126)
 my_metadata$Cell_type <- factor(my_metadata$Cell_type,
                                 levels = c("CD49b-", "CD49b+", "CD150int", "CD150-", "LMPP", "GMP", "MkP", "CFU-E", "empty"))
-my_metadata$Age <- factor(case_when(my_metadata$plate %in% c("090s","091s","246s") ~ "YA", my_metadata$plate %in% c("092s","093s") ~ "Old", my_metadata$plate %in% c("ss2_22_126") ~ "Young"))
+my_metadata$Age <- factor(case_when(my_metadata$plate %in% c("090s","091s","246s") ~ "Adult", my_metadata$plate %in% c("092s","093s") ~ "Old", my_metadata$plate %in% c("ss2_22_126") ~ "Juvenile"))
 my_metadata$Age_Cell_type <- paste0(my_metadata$Age,"_",my_metadata$Cell_type)
 my_metadata$pool <- c(rep("246s",384), rep("090s",384), rep("091s",384),
                       rep(c(rep("092_1",10), rep("092_2",10),
@@ -215,24 +215,19 @@ dat.seurat <- SCTransform(dat.seurat, vars.to.regress = c("percent.mt"), verbose
 dat.seurat <- RunPCA(dat.seurat)
 dat.seurat <- RunUMAP(dat.seurat, dims = 1:10)
 
-dat.seurat$Age <- factor(dat.seurat$Age, levels=c("Young","YA","Old"))
+dat.seurat$Age <- factor(dat.seurat$Age, levels=c("Juvenile","Adult","Old"))
 
 DimPlot(dat.seurat, reduction = "umap", group.by = "plate", shuffle = TRUE)
 DimPlot(dat.seurat, reduction = "umap", group.by = "Age", shuffle = TRUE, cols = colours_Age)
 DimPlot(dat.seurat, reduction = "umap", group.by = "Cell_type", cols = colours_Celltypes, shuffle = TRUE)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_UMAP_Plate.eps", width = 8, height = 7)
-  DimPlot(dat.seurat, reduction = "umap", group.by = "plate", shuffle = TRUE)
-dev.off()
-
-setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_UMAP_Age.eps", width = 8, height = 7)
+postscript("../plots/scRNAseq_analysis/4a_UMAP_Age.eps", width = 8, height = 7)
   DimPlot(dat.seurat, reduction = "umap", group.by = "Age", shuffle = TRUE, cols = colours_Age)
 dev.off()
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_UMAP_CellType.eps", width = 8, height = 7)
+postscript("../plots/scRNAseq_analysis/4a_UMAP_CellType.eps", width = 8, height = 7)
   DimPlot(dat.seurat, reduction = "umap", group.by = "Cell_type", cols = colours_Celltypes, shuffle = TRUE)
 dev.off()
 ```
@@ -241,7 +236,7 @@ dev.off()
 Figure 4c
 
 ```{r GSEA}
-# Old vs Young
+# Old vs Juvenile
 data_norm <- as.data.frame(GetAssayData(object = dat.seurat, slot = "data"))
 
 # Convert gene name back to ENSEMBL
@@ -250,20 +245,20 @@ ENSEMBL_ID[which(is.na(ENSEMBL_ID))] <- rownames(data_norm)[which(is.na(ENSEMBL_
 
 # Select data and add column for ENSEMBL_ID
 column_info <- dat.seurat$Age_Cell_type
-data_norm_YvsOld <- cbind(ENSEMBL_ID,data_norm[,which(column_info %in% c("Young_CD49b-","Young_CD49b+","Old_CD49b-","Old_CD49b+"))])
-my_colnames <- 1:(ncol(data_norm_YvsOld)-1) %>% paste0(.,"_",dat.seurat$Age[which(column_info %in% c("Young_CD49b-","Young_CD49b+","Old_CD49b-","Old_CD49b+"))]) %>% c("ENSEMBL",.)
-colnames(data_norm_YvsOld) <- my_colnames
+data_norm_JvsO <- cbind(ENSEMBL_ID,data_norm[,which(column_info %in% c("Juvenile_CD49b-","Juvenile_CD49b+","Old_CD49b-","Old_CD49b+"))])
+my_colnames <- 1:(ncol(data_norm_JvsO)-1) %>% paste0(.,"_",dat.seurat$Age[which(column_info %in% c("Juvenile_CD49b-","Juvenile_CD49b+","Old_CD49b-","Old_CD49b+"))]) %>% c("ENSEMBL",.)
+colnames(data_norm_JvsO) <- my_colnames
 
 #Write out table
-write.table(data_norm_YvsOld,
-            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_GSEAInput_OldvsYoung.txt"),
+write.table(data_norm_JvsO,
+            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_GSEAInput_OldvsJuvenile.txt"),
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 
-write.table(t(dat.seurat$Age[which(column_info %in% c("Young_CD49b-","Young_CD49b+","Old_CD49b-","Old_CD49b+"))]),
-            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_GSEAPhenotype_OldvsYoung.txt"),
+write.table(t(dat.seurat$Age[which(column_info %in% c("Juvenile_CD49b-","Juvenile_CD49b+","Old_CD49b-","Old_CD49b+"))]),
+            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_GSEAPhenotype_OldvsJuvenile.txt"),
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
 
-rm(data_norm, data_norm_YvsOld, ENSEMBL_ID, my_colnames, column_info)
+rm(data_norm, data_norm_JvsO, ENSEMBL_ID, my_colnames, column_info)
 ```
 
 ## Expression of selected genes in the UMAP
@@ -273,15 +268,24 @@ Supplementary Figures S6a and S9a
 FeaturePlot(dat.seurat, features = "Spib_expression_norm", cols = c("gray","red"), max.cutoff = 3)
 
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_UMAP_Spib_Expression_max3.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/S9a_UMAP_Spib_Expression_max3.eps"), width = 8, height = 7)
   print(FeaturePlot(dat.seurat, features = "Spib_expression_norm", cols = c("gray","red"), max.cutoff = 3))
 dev.off()
 
-my_genes <- c("Itga2","Slamf1","Flt3","Cd48","Fcgr2b","Fcgr3","Aldh1a1","Selp","Spi1","Irf1","Junb","Runx1")
+my_genes <- c("Itga2","Slamf1","Flt3","Cd48","Fcgr2b","Fcgr3","Aldh1a1","Selp")
 for (i in my_genes) {
     print(FeaturePlot(dat.seurat, features = i, cols = c("gray","red")))
     setEPS()
-      postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_UMAP_",i,"_Expression.eps"), width = 8, height = 7)
+      postscript(paste0("../plots/scRNAseq_analysis/S6a_UMAP_",i,"_Expression.eps"), width = 8, height = 7)
+      print(FeaturePlot(dat.seurat, features = i, cols = c("gray","red")))
+    dev.off()
+}
+
+my_genes <- c("Spi1","Irf1","Junb","Runx1")
+for (i in my_genes) {
+    print(FeaturePlot(dat.seurat, features = i, cols = c("gray","red")))
+    setEPS()
+      postscript(paste0("../plots/scRNAseq_analysis/S9a_UMAP_",i,"_Expression.eps"), width = 8, height = 7)
       print(FeaturePlot(dat.seurat, features = i, cols = c("gray","red")))
     dev.off()
 }
@@ -295,12 +299,12 @@ Supplementary Figure S9a
 ```{r Violin_plots}
 CD150hi <- subset(dat.seurat, Cell_type %in% c("CD49b-","CD49b+"))
 Idents(CD150hi) <- CD150hi$Age
-CD150hi$Age <- factor(CD150hi$Age, levels = c("Young","YA","Old"))
-CD150hi$Age_Cell_type <- factor(CD150hi$Age_Cell_type, levels = c("Young_CD49b-","Young_CD49b+","YA_CD49b-","YA_CD49b+","Old_CD49b-","Old_CD49b+")) 
+CD150hi$Age <- factor(CD150hi$Age, levels = c("Juvenile","Adult","Old"))
+CD150hi$Age_Cell_type <- factor(CD150hi$Age_Cell_type, levels = c("Juvenile_CD49b-","Juvenile_CD49b+","Adult_CD49b-","Adult_CD49b+","Old_CD49b-","Old_CD49b+")) 
 
 VlnPlot(CD150hi, features = "Spib_expression_norm", cols = colours_Age, group.by = "Age")
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_Spib_Expression.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/S9a_ViolinPlots_Spib_Expression.eps"), width = 8, height = 7)
   print(VlnPlot(CD150hi, features = "Spib_expression_norm", cols = colours_Age, group.by = "Age", pt.size = 1))
 dev.off()
 
@@ -308,7 +312,7 @@ for (TF in c("Spi1","Irf1","Junb","Runx1")){
   p <- VlnPlot(CD150hi, features = TF, cols = colours_Age, group.by = "Age", pt.size = 1)
   print(p)
   setEPS()
-    postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_",TF,"_expression.eps"), width = 8, height = 7)
+    postscript(paste0("../plots/scRNAseq_analysis/S9a_ViolinPlots_",TF,"_expression.eps"), width = 8, height = 7)
     print(p)
   dev.off()
 }
@@ -316,11 +320,11 @@ for (TF in c("Spi1","Irf1","Junb","Runx1")){
 
 # Differential analysis
 
-## Find the genes that differ most between Young and Old HSCs
+## Find the genes that differ most between Juvenile and Old HSCs
 Figure 4b
 
-```{r Diff_analysis_Young_Old_1}
-dat.seurat.DA <- FindMarkers(CD150hi, ident.1 = "Young", ident.2 = "Old",
+```{r Diff_analysis_Juvenile_Old_1}
+dat.seurat.DA <- FindMarkers(CD150hi, ident.1 = "Juvenile", ident.2 = "Old",
                              test.use = "LR", latent.vars = "percent.mt", logfc.threshold = 1)
 DA.clusters <- dat.seurat.DA[dat.seurat.DA$p_val_adj < 0.01,]
 DA.clusters.Up <- DA.clusters[DA.clusters$avg_log2FC > 1,]
@@ -334,19 +338,19 @@ p <- DoHeatmap(CD150hi, features = row.names(DA.clusters.top100), group.by = "Ag
 print(p)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_Heatmap_diffYvsO_Top50each_LRtest.eps", width = 12, height = 16)
+postscript("../plots/scRNAseq_analysis/4b_Heatmap_diffYvsO_Top50each_LRtest.eps", width = 12, height = 16)
   print(p)
 dev.off()
 
 write.table(DA.clusters.Up,
-            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_Up_in_young_padj0.01_logFC1.txt"),
+            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_Up_in_juvenile_padj0.01_logFC1.txt"),
             quote = FALSE, sep = "\t", row.names = TRUE, col.names = TRUE)
 write.table(DA.clusters.Down,
             file = paste0("../output_files/scRNAseq_analysis/scRNAseq_Up_in_old_padj0.01_logFC1.txt"),
             quote = FALSE, sep = "\t", row.names = TRUE, col.names = TRUE)
 
 write.table(DA.clusters.top100,
-            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_Up_in_old_young_top100_padj0.01_logFC1.txt"),
+            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_Up_in_old_juvenile_top100_padj0.01_logFC1.txt"),
             quote = FALSE, sep = "\t", row.names = TRUE, col.names = TRUE)
 
 data_norm_top100 <- as.data.frame(GetAssayData(object = CD150hi, slot = "data"))
@@ -354,34 +358,34 @@ data_norm_top100 <- data_norm_top100[which(row.names(data_norm_top100) %in% row.
 colnames(data_norm_top100) <- CD150hi$Age_Cell_type
 
 write.table(data_norm_top100,
-            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_Up_in_old_young_norm_top100_padj0.01_logFC1.txt"),
+            file = paste0("../output_files/scRNAseq_analysis/scRNAseq_Up_in_old_juvenile_norm_top100_padj0.01_logFC1.txt"),
             quote = FALSE, sep = "\t", row.names = TRUE, col.names = TRUE)
 
 rm(dat.seurat.DA, DA.clusters, DA.clusters.Up, DA.clusters.Down, DA.clusters.top100, p)
 ```
 
-## Look at differential genes between CD49b+ and CD49b- (Young)
+## Look at differential genes between CD49b+ and CD49b- (Juvenile)
 
 ```{r Diff_analysis_Y}
-CD150hi_Young <- subset(dat.seurat, Cell_type %in% c("CD49b-","CD49b+"))
-CD150hi_Young <- subset(CD150hi_Young, Age == "Young")
-Idents(CD150hi_Young) <- CD150hi$Cell_type
+CD150hi_Juvenile <- subset(dat.seurat, Cell_type %in% c("CD49b-","CD49b+"))
+CD150hi_Juvenile <- subset(CD150hi_Juvenile, Age == "Juvenile")
+Idents(CD150hi_Juvenile) <- CD150hi$Cell_type
 
-dat.seurat.DA <- FindMarkers(CD150hi_Young, ident.1 = "CD49b-", ident.2 = "CD49b+",
+dat.seurat.DA <- FindMarkers(CD150hi_Juvenile, ident.1 = "CD49b-", ident.2 = "CD49b+",
                              test.use = "LR", latent.vars = "percent.mt", logfc.threshold = 0)
 DA.clusters <- dat.seurat.DA[dat.seurat.DA$p_val_adj < 0.05,]
 DA.clusters.Up <- DA.clusters[DA.clusters$avg_log2FC > 0,]
 DA.clusters.Down <- DA.clusters[DA.clusters$avg_log2FC < 0,]
 ```
 
-## Look at differential genes between CD49b+ and CD49b- (YA)
+## Look at differential genes between CD49b+ and CD49b- (Adult)
 
 ```{r Diff_analysis_A}
-CD150hi_YA <- subset(dat.seurat, Cell_type %in% c("CD49b-","CD49b+"))
-CD150hi_YA <- subset(CD150hi_YA, Age == "YA")
-Idents(CD150hi_YA) <- CD150hi$Cell_type
+CD150hi_Adult <- subset(dat.seurat, Cell_type %in% c("CD49b-","CD49b+"))
+CD150hi_Adult <- subset(CD150hi_Adult, Age == "Adult")
+Idents(CD150hi_Adult) <- CD150hi$Cell_type
 
-dat.seurat.DA <- FindMarkers(CD150hi_YA, ident.1 = "CD49b-", ident.2 = "CD49b+",
+dat.seurat.DA <- FindMarkers(CD150hi_Adult, ident.1 = "CD49b-", ident.2 = "CD49b+",
                              test.use = "LR", latent.vars = "percent.mt", logfc.threshold = 1)
 DA.clusters <- dat.seurat.DA[dat.seurat.DA$p_val_adj < 0.01,]
 DA.clusters.Up <- DA.clusters[DA.clusters$avg_log2FC > 1,]
@@ -403,7 +407,7 @@ DA.clusters.Down <- DA.clusters[DA.clusters$avg_log2FC < -0,]
 ```
 
 ```{r}
-rm(CD150hi_Young, CD150hi_YA, CD150hi_Old, dat.seurat.DA, DA.clusters, DA.clusters.Up, DA.clusters.Down)
+rm(CD150hi_Juvenile, CD150hi_Adult, CD150hi_Old, dat.seurat.DA, DA.clusters, DA.clusters.Up, DA.clusters.Down)
 ```
 
 ## Look into Venezia scores
@@ -422,31 +426,31 @@ dat.seurat <- AddModuleScore(object = dat.seurat, features = list(proliferation_
 # Violin plots all Cell types
 VlnPlot(dat.seurat, features = "quiescent1", cols = colours_Celltypes, group.by = "Cell_type")
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_quiescence_cell_types.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/4d_ViolinPlots_quiescence_cell_types.eps"), width = 8, height = 7)
   print(VlnPlot(dat.seurat, features = "quiescent1", cols = colours_Celltypes, group.by = "Cell_type"))
 dev.off()
 
 VlnPlot(dat.seurat, features = "proliferation1", cols = colours_Celltypes, group.by = "Cell_type")
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_proliferation_cell_types.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/4d_ViolinPlots_proliferation_cell_types.eps"), width = 8, height = 7)
   print(VlnPlot(dat.seurat, features = "proliferation1", cols = colours_Celltypes, group.by = "Cell_type"))
 dev.off()
 
 # Violin plots HSCs
 CD150hi <- subset(dat.seurat, Cell_type %in% c("CD49b-","CD49b+"))
 Idents(CD150hi) <- CD150hi$Age
-CD150hi$Age <- factor(CD150hi$Age, levels = c("Young","YA","Old"))
-CD150hi$Age_Cell_type <- factor(CD150hi$Age_Cell_type, levels = c("Young_CD49b-","YA_CD49b-","Old_CD49b-","Young_CD49b+","YA_CD49b+","Old_CD49b+"))
+CD150hi$Age <- factor(CD150hi$Age, levels = c("Juvenile","Adult","Old"))
+CD150hi$Age_Cell_type <- factor(CD150hi$Age_Cell_type, levels = c("Juvenile_CD49b-","Adult_CD49b-","Old_CD49b-","Juvenile_CD49b+","Adult_CD49b+","Old_CD49b+"))
 
 VlnPlot(CD150hi, features = "quiescent1", group.by = "Age_Cell_type", cols = c(colours_Age, colours_Age))
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_quiescence_HSC_age_cell_type.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/4e_ViolinPlots_quiescence_HSC_age_cell_type.eps"), width = 8, height = 7)
   print(VlnPlot(CD150hi, features = "quiescent1", group.by = "Age_Cell_type", cols = c(colours_Age, colours_Age)))
 dev.off()
 
 VlnPlot(CD150hi, features = "proliferation1", group.by = "Age_Cell_type", cols = c(colours_Age, colours_Age))
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_proliferation_HSC_age_cell_types.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/4e_ViolinPlots_proliferation_HSC_age_cell_types.eps"), width = 8, height = 7)
   print(VlnPlot(CD150hi, features = "proliferation1", group.by = "Age_Cell_type", cols = c(colours_Age, colours_Age)))
 dev.off()
 
@@ -491,17 +495,17 @@ kruskal.test(Proliferation ~ Age_Cell_type, data = data_quiescent_neg)
 dunnTest(Proliferation ~ Age_Cell_type, data = data_quiescent_neg, method="bonferroni")
 
 # Mann-Whitney test
-wilcox.test(dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Young_CD49b-")],
-            dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Young_CD49b+")])
-wilcox.test(dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "YA_CD49b-")],
-            dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "YA_CD49b+")])
+wilcox.test(dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Juvenile_CD49b-")],
+            dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Juvenile_CD49b+")])
+wilcox.test(dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Adult_CD49b-")],
+            dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Adult_CD49b+")])
 wilcox.test(dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Old_CD49b-")],
             dat.seurat$quiescent1[which(dat.seurat$Age_Cell_type == "Old_CD49b+")])
 
-wilcox.test(dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Young_CD49b-")],
-            dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Young_CD49b+")])
-wilcox.test(dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "YA_CD49b-")],
-            dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "YA_CD49b+")])
+wilcox.test(dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Juvenile_CD49b-")],
+            dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Juvenile_CD49b+")])
+wilcox.test(dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Adult_CD49b-")],
+            dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Adult_CD49b+")])
 wilcox.test(dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Old_CD49b-")],
             dat.seurat$proliferation1[which(dat.seurat$Age_Cell_type == "Old_CD49b+")])
 
@@ -520,20 +524,20 @@ dat.seurat <- AddModuleScore(object = dat.seurat, features = list(Adhesion_molec
 
 CD150hi <- subset(dat.seurat, Cell_type %in% c("CD49b-","CD49b+"))
 Idents(CD150hi) <- CD150hi$Age
-CD150hi$Age_Cell_type <- factor(CD150hi$Age_Cell_type, levels = c("Young_CD49b-","YA_CD49b-","Old_CD49b-","Young_CD49b+","YA_CD49b+","Old_CD49b+"))
+CD150hi$Age_Cell_type <- factor(CD150hi$Age_Cell_type, levels = c("Juvenile_CD49b-","Adult_CD49b-","Old_CD49b-","Juvenile_CD49b+","Adult_CD49b+","Old_CD49b+"))
 VlnPlot(CD150hi, features = "Adhesion_molecules1", group.by = "Age_Cell_type", cols = c(colours_Age, colours_Age))
 
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_KEGG_adhesion_HSC_age.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/S6g_ViolinPlots_KEGG_adhesion_HSC_age.eps"), width = 8, height = 7)
   print(VlnPlot(CD150hi, features = "Adhesion_molecules1", group.by = "Age_Cell_type", cols = c(colours_Age, colours_Age), pt.size = 1))
 dev.off()
 
-CD150hi$Age_Cell_type2 <- factor(CD150hi$Age_Cell_type, levels = c("Young_CD49b-","Young_CD49b+","YA_CD49b-","YA_CD49b+","Old_CD49b-","Old_CD49b+"))
+CD150hi$Age_Cell_type2 <- factor(CD150hi$Age_Cell_type, levels = c("Juvenile_CD49b-","Juvenile_CD49b+","Adult_CD49b-","Adult_CD49b+","Old_CD49b-","Old_CD49b+"))
 
 VlnPlot(CD150hi, features = "Itgb1", group.by = "Age_Cell_type2", cols = c("#DCBF30", "#9E1F19", "#DCBF30", "#9E1F19" ,"#DCBF30", "#9E1F19"))
 
 setEPS()
-  postscript(paste0("../plots/scRNAseq_analysis/scRNAseq_ViolinPlots_Itgb1_expression_HSC_age2.eps"), width = 8, height = 7)
+  postscript(paste0("../plots/scRNAseq_analysis/S6h_ViolinPlots_Itgb1_expression_HSC_age.eps"), width = 8, height = 7)
   print(VlnPlot(CD150hi, features = "Itgb1", group.by = "Age_Cell_type2", cols = c("#DCBF30", "#9E1F19", "#DCBF30", "#9E1F19" ,"#DCBF30", "#9E1F19"), pt.size = 1))
 dev.off()
 
@@ -573,8 +577,8 @@ summary(model)
 TukeyHSD(model)
 
 # T test
-t.test(data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Young_CD49b-")], data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Young_CD49b+")])
-t.test(data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "YA_CD49b-")], data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "YA_CD49b+")])
+t.test(data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Juvenile_CD49b-")], data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Juvenile_CD49b+")])
+t.test(data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Adult_CD49b-")], data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Adult_CD49b+")])
 t.test(data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Old_CD49b-")], data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Old_CD49b+")])
 
 mean(data_adhesion$Adhesion[which(data_adhesion$Age_Cell_type == "Old_CD49b-")])
@@ -590,7 +594,7 @@ Figure 4f and Supplementary Figure S6i
 annotation_HSCScore <- read.table('../data/scRNAseq_analysis/Annotation_table_all_filtered_cells_SICOF_pipeline_withHSCScore.txt', header = TRUE, sep="\t")
 
 annotation_HSCScore$Cell_type <- factor(annotation_HSCScore$Cell_type, levels = c("CD49b-","CD49b+","LMPP","GMP"))
-annotation_HSCScore$Age <- factor(annotation_HSCScore$Age, levels = c("Young","YA","Old"))
+annotation_HSCScore$Age <- factor(annotation_HSCScore$Age, levels = c("Juvenile","Adult","Old"))
 
 ggplot(annotation_HSCScore, aes(y = HSCScore, x = Age, fill = Cell_type)) +
   geom_boxplot(position = position_dodge(1), outlier.size = 0.5) +
@@ -598,7 +602,7 @@ ggplot(annotation_HSCScore, aes(y = HSCScore, x = Age, fill = Cell_type)) +
   scale_fill_manual(values = colours_Celltypes)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_Boxplot_HSCScore_all.eps", width = 10, height = 5)
+postscript("../plots/scRNAseq_analysis/4f_Boxplot_HSCScore_all.eps", width = 10, height = 5)
   ggplot(annotation_HSCScore, aes(y = HSCScore, x = Age, fill = Cell_type)) +
   geom_boxplot(position = position_dodge(1), outlier.size = 0.5) +
   theme_classic() +
@@ -613,7 +617,7 @@ ggplot(annotation_HSCScore_main, aes(y = HSCScore, x = Cell_type, fill = Age)) +
   scale_fill_manual(values = colours_Age)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_Boxplot_HSCScore_HSCs.eps", width = 10, height = 5)
+postscript("../plots/scRNAseq_analysis/S6i_Boxplot_HSCScore_HSCs.eps", width = 10, height = 5)
   ggplot(annotation_HSCScore_main, aes(y = HSCScore, x = Cell_type, fill = Age)) +
   geom_boxplot(position = position_dodge(1), outlier.size = 0.5) +
   theme_classic() +
@@ -635,12 +639,12 @@ annotation_HSCScore_main %>%
 # Assumption of normality is not met, so we use a non-parametric test
 
 ## Compare using Mann-Whitney test
-HSCScore_x <- annotation_HSCScore %>% filter(Age_Cell_type == "Young_CD49b-") %>% {.$HSCScore} 
-HSCScore_y <- annotation_HSCScore %>% filter(Age_Cell_type == "Young_CD49b+") %>% {.$HSCScore}
+HSCScore_x <- annotation_HSCScore %>% filter(Age_Cell_type == "Juvenile_CD49b-") %>% {.$HSCScore} 
+HSCScore_y <- annotation_HSCScore %>% filter(Age_Cell_type == "Juvenile_CD49b+") %>% {.$HSCScore}
 wilcox.test(HSCScore_x,HSCScore_y)
 
-HSCScore_x <- annotation_HSCScore %>% filter(Age_Cell_type == "YA_CD49b-") %>% {.$HSCScore} 
-HSCScore_y <- annotation_HSCScore %>% filter(Age_Cell_type == "YA_CD49b+") %>% {.$HSCScore}
+HSCScore_x <- annotation_HSCScore %>% filter(Age_Cell_type == "Adult_CD49b-") %>% {.$HSCScore} 
+HSCScore_y <- annotation_HSCScore %>% filter(Age_Cell_type == "Adult_CD49b+") %>% {.$HSCScore}
 wilcox.test(HSCScore_x,HSCScore_y)
 
 HSCScore_x <- annotation_HSCScore %>% filter(Age_Cell_type == "Old_CD49b-") %>% {.$HSCScore} 
@@ -722,7 +726,7 @@ temp <- dat.seurat.fetal
 temp@assays$RNA <- RNA
 dat.seurat.fetal[["percentMito"]] <- PercentageFeatureSet(temp, pattern = "^mt-")
 
-rm(metadata_fetal, df_fetal_Li, RNA, temp, Gene_Ids_fetal)
+rm(metadata_fetal, df_fetal_Li, RNA, temp)
 ```
 
 ## Load Herault data
@@ -768,7 +772,7 @@ p <- ggplot(cluster_distribution, aes(fill=Var1, y=Freq, x=CT_Age)) +
 print(p)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_Barplot_RF_CellType.eps", width=12, height=6)
+postscript("../plots/scRNAseq_analysis/S6b_Barplot_RF_CellType.eps", width=12, height=6)
   print(p)
 dev.off()
 
@@ -793,7 +797,7 @@ cluster_distribution <- as.data.frame(table(dat.seurat$Age_fetal, dat.seurat$Age
 cluster_distribution <- cluster_distribution %>%
   filter(Var3 %in% c("CD49b-", "CD49b+"))
 cluster_distribution$CT_Age <- paste0(cluster_distribution$Var3,"_",cluster_distribution$Var2)
-cluster_distribution$CT_Age <- factor(cluster_distribution$CT_Age, levels = c("CD49b-_Young","CD49b+_Young","CD49b-_YA","CD49b+_YA","CD49b-_Old","CD49b+_Old"))
+cluster_distribution$CT_Age <- factor(cluster_distribution$CT_Age, levels = c("CD49b-_Juvenile","CD49b+_Juvenile","CD49b-_Adult","CD49b+_Adult","CD49b-_Old","CD49b+_Old"))
 
 p <- ggplot(cluster_distribution, aes(fill=Var1, y=Freq, x=CT_Age)) + 
   geom_bar(position="fill", stat="identity") +
@@ -803,7 +807,7 @@ p <- ggplot(cluster_distribution, aes(fill=Var1, y=Freq, x=CT_Age)) +
 print(p)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_Barplot_Fetal_CellType.eps", width=12, height=6)
+postscript("../plots/scRNAseq_analysis/S6d_Barplot_Fetal_CellType.eps", width=12, height=6)
   print(p)
 dev.off()
 
@@ -822,7 +826,7 @@ cluster_distribution <- as.data.frame(table(dat.seurat$Herault_clust, dat.seurat
 cluster_distribution <- cluster_distribution %>%
   filter(Var3 %in% c("CD49b-", "CD49b+"))
 cluster_distribution$CT_Age <- paste0(cluster_distribution$Var3,"_",cluster_distribution$Var2)
-cluster_distribution$CT_Age <- factor(cluster_distribution$CT_Age, levels = c("CD49b-_Young","CD49b+_Young","CD49b-_YA","CD49b+_YA","CD49b-_Old","CD49b+_Old"))
+cluster_distribution$CT_Age <- factor(cluster_distribution$CT_Age, levels = c("CD49b-_Juvenile","CD49b+_Juvenile","CD49b-_Adult","CD49b+_Adult","CD49b-_Old","CD49b+_Old"))
 
 p <- ggplot(cluster_distribution, aes(fill=Var1, y=Freq, x=CT_Age)) + 
   geom_bar(position="fill", stat="identity") +
@@ -833,7 +837,7 @@ p <- ggplot(cluster_distribution, aes(fill=Var1, y=Freq, x=CT_Age)) +
 print(p)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_Barplot_Herault_cluster.eps", width=12, height=6)
+postscript("../plots/scRNAseq_analysis/S6c_Barplot_Herault_cluster.eps", width=12, height=6)
   print(p)
 dev.off()
 
@@ -859,9 +863,9 @@ c("A10_young", "A11_young", "A3_young", "A4_young", "A5_young", "A7_young", "A9_
 
 metadata_Grover <- data.frame(name = colnames(Grover))
 metadata_Grover$Age <- sapply(strsplit(metadata_Grover$name, "_"), function(x) x[2])
-metadata_Grover$Age[which(metadata_Grover$Age == "young")] <- "YA"
+metadata_Grover$Age[which(metadata_Grover$Age == "young")] <- "Adult"
 metadata_Grover$Age[which(metadata_Grover$Age == "old")] <- "Old"
-metadata_Grover$Age <- factor(metadata_Grover$Age, levels=c("Young","YA","Old"))
+metadata_Grover$Age <- factor(metadata_Grover$Age, levels=c("Juvenile","Adult","Old"))
 rownames(metadata_Grover) <- metadata_Grover$name
 
 # Load into Seurat
@@ -885,9 +889,9 @@ Mann <- Mann[,which(colnames(Mann) %in% Mann_keep)]
 metadata_Mann <- data.frame(name = colnames(Mann))
 metadata_Mann$Cell_type <- sapply(strsplit(metadata_Mann$name, "_"), function(x) x[1])
 metadata_Mann$Age <- sapply(strsplit(metadata_Mann$name, "_"), function(x) x[2])
-metadata_Mann$Age[which(metadata_Mann$Age %in% c("young", "young1", "young2", "young3"))] <- "YA"
+metadata_Mann$Age[which(metadata_Mann$Age %in% c("young", "young1", "young2", "young3"))] <- "Adult"
 metadata_Mann$Age[which(metadata_Mann$Age %in% c("old", "old2", "old3"))] <- "Old"
-metadata_Mann$Age <- factor(metadata_Mann$Age, levels=c("Young","YA","Old"))
+metadata_Mann$Age <- factor(metadata_Mann$Age, levels=c("Juvenile","Adult","Old"))
 rownames(metadata_Mann) <- metadata_Mann$name
 
 # Only look at non stimulated cells
@@ -925,8 +929,8 @@ temp <- gene_names$name_unique[match(rownames(Kirschner), gene_names$gene)]
 rownames(Kirschner)[which(!is.na(match(rownames(Kirschner), gene_names$gene)))] <- temp[which(!is.na(match(rownames(Kirschner), gene_names$gene)))]
 
 metadata_Kirschner <- data.frame(name = colnames(Kirschner))
-metadata_Kirschner$Age <- c(rep("Old", 96), rep("YA", 192), rep("Old", 96))
-metadata_Kirschner$Age <- factor(metadata_Kirschner$Age, levels=c("Young","YA","Old"))
+metadata_Kirschner$Age <- c(rep("Old", 96), rep("Adult", 192), rep("Old", 96))
+metadata_Kirschner$Age <- factor(metadata_Kirschner$Age, levels=c("Juvenile","Adult","Old"))
 metadata_Kirschner$batch <- c(rep("1", 96), rep("1", 96), rep("2", 96), rep("2", 96))
 rownames(metadata_Kirschner) <- metadata_Kirschner$name
 
@@ -971,7 +975,7 @@ metadata_Kowalczyk <- metadata_Kowalczyk[-grep("^old_ST_HSC_", metadata_Kowalczy
 Kowalczyk <- Kowalczyk[,-grep("^old_MPP_", metadata_Kowalczyk$name)]
 metadata_Kowalczyk <- metadata_Kowalczyk[-grep("^old_MPP_", metadata_Kowalczyk$name),]
 
-metadata_Kowalczyk$Age[grep("^young_LT_HSC_", metadata_Kowalczyk$name)] <- "YA"
+metadata_Kowalczyk$Age[grep("^young_LT_HSC_", metadata_Kowalczyk$name)] <- "Adult"
 metadata_Kowalczyk$Age[grep("^old_LT_HSC_", metadata_Kowalczyk$name)] <- "Old"
 metadata_Kowalczyk$Age[grep("^old_LT_HSC_biol_replicate_", metadata_Kowalczyk$name)] <- "Old"
 
@@ -1011,12 +1015,12 @@ combined.combined <- ScaleData(combined.combined, verbose = FALSE)
 combined.combined <- RunPCA(combined.combined, verbose = FALSE)
 combined.combined <- RunUMAP(combined.combined, dims = 1:10, verbose = FALSE)
 
-combined.combined$Age <- factor(combined.combined$Age, levels = c("Young","YA","Old"))
+combined.combined$Age <- factor(combined.combined$Age, levels = c("Juvenile","Adult","Old"))
 combined.combined$source <- factor(combined.combined$source, levels = c("Luc","Grover","Kirschner","Kowalczyk","Mann"))
 DimPlot(combined.combined, reduction = "umap", group.by = "Age", shuffle = TRUE, split.by = "source", cols = colours_Age)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_UMAP_Luc_Svendsen_Age.v3.eps", width=12, height=4)
+postscript("../plots/scRNAseq_analysis/S6e_UMAP_Luc_Svendsen_Age.eps", width=12, height=4)
   DimPlot(combined.combined, reduction = "umap", group.by = "Age", shuffle = TRUE, split.by = "source", cols = colours_Age)
 dev.off()
 
@@ -1027,7 +1031,7 @@ rm(combined_list, features, combined.anchors, combined.combined)
 Supplementary figure S6f
 
 ```{r}
-Up_young <- read.table("../output_files/scRNAseq_analysis/scRNAseq_Up_in_young_padj0.01_logFC1.txt", header = TRUE)
+Up_juvenile <- read.table("../output_files/scRNAseq_analysis/scRNAseq_Up_in_juvenile_padj0.01_logFC1.txt", header = TRUE)
 Up_old <- read.table("../output_files/scRNAseq_analysis/scRNAseq_Up_in_old_padj0.01_logFC1.txt", header = TRUE)
 
 dat.seurat.mann <- SCTransform(dat.seurat.mann, verbose = FALSE)
@@ -1042,31 +1046,31 @@ all_studies <- list(Mann = dat.seurat.mann,
                     Kirschner = dat.seurat.kirschner)
 
 temp_df <- data.frame(matrix(ncol = 4, nrow = 0))
-colnames(temp_df) <- c("Up_young", "Up_old", "Age", "Study")
+colnames(temp_df) <- c("Up_juvenile", "Up_old", "Age", "Study")
 
 for(study in c("Mann","Grover","Luc","Kowalczyk","Kirschner")){
-  all_studies[[study]] <- AddModuleScore(object = all_studies[[study]], features = list(rownames(Up_young)), name = 'Up_young', assay = "SCT")
+  all_studies[[study]] <- AddModuleScore(object = all_studies[[study]], features = list(rownames(Up_juvenile)), name = 'Up_juvenile', assay = "SCT")
   all_studies[[study]] <- AddModuleScore(object = all_studies[[study]], features = list(rownames(Up_old)), name = 'Up_old', assay = "SCT")
-  temp <- data.frame(Up_in_young = all_studies[[study]]$Up_young1,
+  temp <- data.frame(Up_in_juvenile = all_studies[[study]]$Up_juvenile1,
                      Up_in_old = all_studies[[study]]$Up_old1,
                      Age = all_studies[[study]]$Age,
                      Study = study)
   temp_df <- rbind(temp_df, temp)
 }
 
-temp_df$Age <- factor(temp_df$Age, levels = c("Young","YA","Old"))
+temp_df$Age <- factor(temp_df$Age, levels = c("Juvenile","Adult","Old"))
 temp_df$Study <- factor(temp_df$Study, levels = c("Luc","Grover","Kowalczyk","Kirschner","Mann"))
 
-p <- ggplot(temp_df, aes(y = Up_in_young, x = Study, fill = Age)) +
+p <- ggplot(temp_df, aes(y = Up_in_juvenile, x = Study, fill = Age)) +
   geom_violin(position = position_dodge(1), outlier.shape = NA) +
   geom_point(position = position_jitterdodge(dodge.width = 1, jitter.width = 0.5), size = 0.2) +
   theme_classic() +
-  ggtitle("Up in Young") +
+  ggtitle("Up in Juvenile") +
   scale_fill_manual(values = colours_Age)
 print(p)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_violin_Luc_Svendsen_Regions_Up_Young.v3.eps", width=9, height=6)
+postscript("../plots/scRNAseq_analysis/S6f_ViolinPlots_Luc_Svendsen_Regions_Up_Juvenile.eps", width=9, height=6)
   print(p)
 dev.off()
 
@@ -1079,11 +1083,11 @@ p <- ggplot(temp_df, aes(y = Up_in_old, x = Study, fill = Age)) +
 print(p)
 
 setEPS()
-postscript("../plots/scRNAseq_analysis/scRNAseq_violin_Luc_Svendsen_Regions_Up_Old.v3.eps", width=9, height=6)
+postscript("../plots/scRNAseq_analysis/S6f_ViolinPlots_Luc_Svendsen_Regions_Up_Old.eps", width=9, height=6)
   print(p)
 dev.off()
 
-rm(all_studies, p, Up_young, Up_old, study, p, temp)
+rm(all_studies, p, Up_juvenile, Up_old, study, p, temp)
 ```
 
 ## Statistical analysis
@@ -1094,7 +1098,7 @@ temp_df$Age_Study <- paste0(temp_df$Age,"_",temp_df$Study)
 
 temp_df %>%
   group_by(Age_Study) %>%
-  shapiro_test(Up_in_young)
+  shapiro_test(Up_in_juvenile)
 
 temp_df %>%
   group_by(Age_Study) %>%
@@ -1103,33 +1107,33 @@ temp_df %>%
 # Assumption of normality is not met, so we use a non-parametric test
 
 # Mann et al.
-temp_A <- temp_df[which(temp_df$Study == "Mann" & temp_df$Age == "YA"),]
+temp_A <- temp_df[which(temp_df$Study == "Mann" & temp_df$Age == "Adult"),]
 temp_O <- temp_df[which(temp_df$Study == "Mann" & temp_df$Age == "Old"),]
-wilcox.test(x = temp_A$Up_in_young, y = temp_O$Up_in_young)
+wilcox.test(x = temp_A$Up_in_juvenile, y = temp_O$Up_in_juvenile)
 wilcox.test(x = temp_A$Up_in_old, y = temp_O$Up_in_old)
 
 # Kirschner et al.
-temp_A <- temp_df[which(temp_df$Study == "Kirschner" & temp_df$Age == "YA"),]
+temp_A <- temp_df[which(temp_df$Study == "Kirschner" & temp_df$Age == "Adult"),]
 temp_O <- temp_df[which(temp_df$Study == "Kirschner" & temp_df$Age == "Old"),]
-wilcox.test(x = temp_A$Up_in_young, y = temp_O$Up_in_young)
+wilcox.test(x = temp_A$Up_in_juvenile, y = temp_O$Up_in_juvenile)
 wilcox.test(x = temp_A$Up_in_old, y = temp_O$Up_in_old)
 
 # Grover et al.
-temp_A <- temp_df[which(temp_df$Study == "Grover" & temp_df$Age == "YA"),]
+temp_A <- temp_df[which(temp_df$Study == "Grover" & temp_df$Age == "Adult"),]
 temp_O <- temp_df[which(temp_df$Study == "Grover" & temp_df$Age == "Old"),]
-wilcox.test(x = temp_A$Up_in_young, y = temp_O$Up_in_young)
+wilcox.test(x = temp_A$Up_in_juvenile, y = temp_O$Up_in_juvenile)
 wilcox.test(x = temp_A$Up_in_old, y = temp_O$Up_in_old)
 
 # Kowalczyk et al.
-temp_A <- temp_df[which(temp_df$Study == "Kowalczyk" & temp_df$Age == "YA"),]
+temp_A <- temp_df[which(temp_df$Study == "Kowalczyk" & temp_df$Age == "Adult"),]
 temp_O <- temp_df[which(temp_df$Study == "Kowalczyk" & temp_df$Age == "Old"),]
-wilcox.test(x = temp_A$Up_in_young, y = temp_O$Up_in_young)
+wilcox.test(x = temp_A$Up_in_juvenile, y = temp_O$Up_in_juvenile)
 wilcox.test(x = temp_A$Up_in_old, y = temp_O$Up_in_old)
 
 # Somuncular et al.
-temp_A <- temp_df[which(temp_df$Study == "Luc" & temp_df$Age == "YA"),]
+temp_A <- temp_df[which(temp_df$Study == "Luc" & temp_df$Age == "Adult"),]
 temp_O <- temp_df[which(temp_df$Study == "Luc" & temp_df$Age == "Old"),]
-wilcox.test(x = temp_A$Up_in_young, y = temp_O$Up_in_young)
+wilcox.test(x = temp_A$Up_in_juvenile, y = temp_O$Up_in_juvenile)
 wilcox.test(x = temp_A$Up_in_old, y = temp_O$Up_in_old)
 
 rm(temp_A, temp_O, temp_df)

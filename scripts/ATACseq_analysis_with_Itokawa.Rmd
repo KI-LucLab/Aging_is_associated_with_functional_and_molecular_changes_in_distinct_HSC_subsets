@@ -143,24 +143,24 @@ postscript("../plots/ATACseq_analysis/S8c_CorrelationHeatmap_allPopulations_with
 dev.off()
 ```
 
-# Load reagions that are diff in Young vs. Old in our data or that are diff in CD49b+ vs CD49bneg
+# Load reagions that are diff in Juvenile vs. Old in our data or that are diff in CD49b+ vs CD49bneg
 ```{r}
-YvsO_cluster1 <- read.delim("../output_files/ATACseq_analysis/Diff_merged_Y_O_main_clust1_of_3.bed", header=FALSE, sep="\t")
+JvsO_cluster1 <- read.delim("../output_files/ATACseq_analysis/Diff_merged_J_O_main_clust1_of_3.bed", header=FALSE, sep="\t")
 
-gr_YvsO_cluster1 <- GRanges(seqnames = as.character(YvsO_cluster1$V1),
-                            ranges = IRanges(start=YvsO_cluster1$V2,
-                                             end=YvsO_cluster1$V3,
-                                             names=YvsO_cluster1$V4))
+gr_JvsO_cluster1 <- GRanges(seqnames = as.character(JvsO_cluster1$V1),
+                            ranges = IRanges(start=JvsO_cluster1$V2,
+                                             end=JvsO_cluster1$V3,
+                                             names=JvsO_cluster1$V4))
 
 gr_df_raw_filtered <- GRanges(seqnames = as.character(df_raw_filtered$Chr),
                             ranges = IRanges(start=df_raw_filtered$Start,
                                              end=df_raw_filtered$End,
                                              names=df_raw_filtered$Location))
 
-overlaps_YvsO_cluster1 <- findOverlaps(query=gr_YvsO_cluster1, subject=gr_df_raw_filtered)
-df_LQT_corrected_cluster1 <- df_LQT_corrected[subjectHits(overlaps_YvsO_cluster1),]
+overlaps_JvsO_cluster1 <- findOverlaps(query=gr_JvsO_cluster1, subject=gr_df_raw_filtered)
+df_LQT_corrected_cluster1 <- df_LQT_corrected[subjectHits(overlaps_JvsO_cluster1),]
 
-YvsO_cluster2 <- read.delim("../output_files/ATACseq_analysis/Diff_merged_Y_O_main_clust2_of_3.bed", header=FALSE, sep="\t")
+YvsO_cluster2 <- read.delim("../output_files/ATACseq_analysis/Diff_merged_J_O_main_clust2_of_3.bed", header=FALSE, sep="\t")
 
 gr_YvsO_cluster2 <- GRanges(seqnames = as.character(YvsO_cluster2$V1),
                             ranges = IRanges(start=YvsO_cluster2$V2,
@@ -170,7 +170,7 @@ gr_YvsO_cluster2 <- GRanges(seqnames = as.character(YvsO_cluster2$V1),
 overlaps_YvsO_cluster2 <- findOverlaps(query=gr_YvsO_cluster2, subject=gr_df_raw_filtered)
 df_LQT_corrected_cluster2 <- df_LQT_corrected[subjectHits(overlaps_YvsO_cluster2),]
 
-YvsO_cluster3 <- read.delim("../output_files/ATACseq_analysis/Diff_merged_Y_O_main_clust3_of_3.bed", header=FALSE, sep="\t")
+YvsO_cluster3 <- read.delim("../output_files/ATACseq_analysis/Diff_merged_J_O_main_clust3_of_3.bed", header=FALSE, sep="\t")
 
 gr_YvsO_cluster3 <- GRanges(seqnames = as.character(YvsO_cluster3$V1),
                             ranges = IRanges(start=YvsO_cluster3$V2,
@@ -193,7 +193,7 @@ df_LQT_corrected_all_clusters[,i_main_df] %>%
            rownames = FALSE, ycluster = FALSE, xcluster = FALSE, colours_Celltypes = colours_Celltypes[1:3], colours_Age = colours_Age, order = "Age")
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Heatmap_diff_Young_vs_Old_with_Itokawa.eps", width=9, height=6)
+postscript("../plots/ATACseq_analysis/S8e_Heatmap_Diff_JuvenilevsOld_with_Itokawa.eps", width=9, height=6)
 df_LQT_corrected_all_clusters[,i_main_df] %>%
   Row_norm(annotation[i_main,], basic) %>%
   Heat_map(annotation[i_main,], basic, "Aging comparison including Itokawa",
@@ -206,26 +206,6 @@ Supplementary Figure S9b
 
 ```{r}
 annotation$Cell_type <- factor(annotation$Cell_type, levels = c("CD49bneg", "HSC_I", "CD49bpos", "LMPP", "LMPP_I", "GMP", "GMP_I"))
-
-Up_Yneg_Ypos <- read.delim("../output_files/ATACseq_analysis/Up_Yneg_Ypos.bed", header=FALSE, sep="\t")
-
-gr_Up_Yneg_Ypos <- GRanges(seqnames = as.character(Up_Yneg_Ypos$V1),
-                            ranges = IRanges(start=Up_Yneg_Ypos$V2,
-                                             end=Up_Yneg_Ypos$V3,
-                                             names=Up_Yneg_Ypos$V4))
-
-overlaps_Up_Yneg_Ypos <- findOverlaps(query=gr_Up_Yneg_Ypos, subject=gr_df_raw_filtered)
-df_LQT_corrected_Up_Yneg_Ypos <- df_LQT_corrected[subjectHits(overlaps_Up_Yneg_Ypos),]
-
-Down_Yneg_Ypos <- read.delim("../output_files/ATACseq_analysis/Down_Yneg_Ypos.bed", header=FALSE, sep="\t")
-
-gr_Down_Yneg_Ypos <- GRanges(seqnames = as.character(Down_Yneg_Ypos$V1),
-                            ranges = IRanges(start=Down_Yneg_Ypos$V2,
-                                             end=Down_Yneg_Ypos$V3,
-                                             names=Down_Yneg_Ypos$V4))
-
-overlaps_Down_Yneg_Ypos <- findOverlaps(query=gr_Down_Yneg_Ypos, subject=gr_df_raw_filtered)
-df_LQT_corrected_Down_Yneg_Ypos <- df_LQT_corrected[subjectHits(overlaps_Down_Yneg_Ypos),]
 
 Up_Oneg_Opos <- read.delim("../output_files/ATACseq_analysis/Up_Oneg_Opos.bed", header=FALSE, sep="\t")
 
@@ -277,7 +257,7 @@ df_LQT_corrected_Diff_Oneg_Opos[,i_adult_old_df] %>%
              colours_Celltypes = colours_Celltypes[c(1,3,2)], colours_Age = colours_Age[2:3])
 
 setEPS()
-postscript("../plots/ATACseq_analysis/Heatmap_diff_Oldneg_vs_Oldpos_with_Itokawa.eps", width=9, height=6)
+postscript("../plots/ATACseq_analysis/S9b_Heatmap_Diff_OnegvsOpos_with_Itokawa.eps", width=9, height=6)
 df_LQT_corrected_Diff_Oneg_Opos[,i_adult_old_df] %>%
   Row_norm(annotation[i_adult_old,], basic) %>%
   Heat_map_3(annotation[i_adult_old,], basic, "Old subtype comparison including Itokawa",
