@@ -1,0 +1,180 @@
+---
+title: "Functional analysis"
+author: "Julia Hauenstein & Franca Su"
+date: "`r format(Sys.Date(),format='%d/%m/%Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages needed
+To install either use: install.packages("package1") or BiocManager::install("package2")
+
+```{r install_packages, message=FALSE, error=FALSE, warning=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(hrbrthemes)
+```
+
+# Read in excel files
+
+```{r read_files}
+data_3 <- read.csv2("../data/Functional_analysis/Figure3_input_data_lollipop_graph_240513.csv", header = TRUE) %>% as_tibble()
+data_3$AgePopulation <- paste(data_3$Age, data_3$Population, sep = "_") %>%
+  factor(levels = c("Old_CD49bpos", "Old_CD49bneg", "Young_CD49bpos", "Young_CD49bneg"))
+
+data_S4 <- read.csv2("../data/Functional_analysis/FigureS4_input_data_lollipop_graph_240425.csv", header = TRUE) %>% as_tibble()
+data_S4$AgePopulation <- paste(data_S4$Age, data_S4$Population, sep = "_") %>%
+  factor(levels = c("Old_CD49bpos", "Old_CD49bneg", "Young_CD49bpos", "Young_CD49bneg"))
+```
+
+# Figure 3
+
+```{r}
+data_3$Transplantation_Reconstitution <- paste(data_3$Transplantation, data_3$Reconstitution, sep = "_") %>%
+  factor(levels = c("2_M", "2_HSC", "1_M", "1_HSC"))
+
+data_3$Population <- factor(data_3$Population, levels = c("CD49bpos", "CD49bneg"))
+
+lollipop_plot_3.2 <- function(data, age) {
+  # data = dataframe with input data
+  # age = age of mice
+  if (age == "Young") {
+        my_colour <- "#EC7B22"
+  } else if (age == "Old") {
+        my_colour <- "#074010"
+  }
+  data %>%
+    filter(Age == age) %>%
+    arrange(Transplantation_Reconstitution) %>%
+    ggplot(aes(x = Transplantation_Reconstitution, y = Percent_mice)) +
+      geom_linerange(aes(x = Transplantation_Reconstitution, ymin = 0, ymax = Percent_mice, group = Population),
+                     color = "grey",
+                     position = position_dodge(width = 0.8),
+                     linewidth = 1) +
+      geom_point(aes(color = Age, shape = Population, group = Population),
+                 position = position_dodge(width = 0.8),
+                 size = 5) +
+      scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+      coord_flip() +
+      theme_classic() +
+      #theme(legend.position = "none") +
+      xlab("") +
+      scale_shape_manual(values = c(15,19)) +
+      scale_color_manual(values = c(my_colour))
+}
+
+# Figure 3A
+print(lollipop_plot_3.2(data_3, age = "Young"))
+
+setEPS()
+postscript(paste0("../plots/Functional_analysis/Figure3A_Young.v2.eps"), width = 5, height = 3)
+  print(lollipop_plot_3.2(data_3, age = "Young"))
+dev.off()
+
+# Figure 3C
+print(lollipop_plot_3.2(data_3, age = "Old"))
+
+setEPS()
+postscript(paste0("../plots/Functional_analysis/Figure3C_Old.v2.eps"), width = 5, height = 3)
+  print(lollipop_plot_3.2(data_3, age = "Old"))
+dev.off()
+```
+
+# Fishers exact test (no multiple comparison correction)
+```{r}
+data_3$n_mice_total <- c(15,23,15,23,20,18,20,18,12,8,12,8,17,10,17,10)
+data_3$n_not_reconstituted <- data_3$n_mice_total - data_3$Number_mice
+
+dat <- data.frame("neg" = c(10, 5), "pos" = c(6, 17), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat) # Significant
+
+dat <- data.frame("neg" = c(12, 3), "pos" = c(13, 10), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat)
+
+dat <- data.frame("neg" = c(11, 1), "pos" = c(1, 7), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat) # Significant
+
+dat <- data.frame("neg" = c(10, 2), "pos" = c(7, 1), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat)
+
+dat <- data.frame("neg" = c(20, 0), "pos" = c(17, 1), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat)
+
+dat <- data.frame("neg" = c(20, 0), "pos" = c(18, 0), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat)
+
+dat <- data.frame("neg" = c(14, 3), "pos" = c(7, 3), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat)
+
+dat <- data.frame("neg" = c(16, 1), "pos" = c(8, 2), row.names = c("Reconstituted", "Not"), stringsAsFactors = FALSE
+)
+fisher.test(dat)
+```
+
+
+# Figure S4
+
+```{r}
+lollipop_plot_S4 <- function(data, reconstituted_population) {
+  # data = dataframe with input data
+  # reconstituted_population = considered cell population for reconstitution, options are "GMP", "MkP", "LMPP" and "CLP"
+  data %>%
+    filter(Reconstitution == reconstituted_population) %>%
+    arrange(AgePopulation) %>%
+    ggplot(aes(x = AgePopulation, y = Percent_mice)) +
+      geom_segment(aes(x = AgePopulation, xend = AgePopulation, y = 0, yend = Percent_mice),
+                   color = "grey",
+                   size = 1) +
+      geom_point(aes(color = Age, shape = Population),
+                 size = 5) +
+      scale_y_continuous(expand = c(0,0), limits = c(0,105)) +
+      coord_flip() +
+      theme_classic() +
+      theme(legend.position = "none") +
+      xlab("") +
+      scale_color_manual(values = c("#074010","#EC7B22")) +
+      scale_shape_manual(values = c(19,15))
+}
+
+# Figure S4A
+print(lollipop_plot_S4(data_S4, reconstituted_population = "GMP"))
+
+setEPS()
+postscript(paste0("../plots/Functional_analysis/FigureS4A_GMPReconstituted.eps"), width = 5, height = 3)
+  print(lollipop_plot_S4(data_S4, reconstituted_population = "GMP"))
+dev.off()
+
+# Figure S4B
+print(lollipop_plot_S4(data_S4, reconstituted_population = "MkP"))
+
+setEPS()
+postscript(paste0("../plots/Functional_analysis/FigureS4B_MkPReconstituted.eps"), width = 5, height = 3)
+  print(lollipop_plot_S4(data_S4, reconstituted_population = "MkP"))
+dev.off()
+
+# Figure S4C
+print(lollipop_plot_S4(data_S4, reconstituted_population = "LMPP"))
+
+setEPS()
+postscript(paste0("../plots/Functional_analysis/FigureS4C_LMPPReconstituted.eps"), width = 5, height = 3)
+  print(lollipop_plot_S4(data_S4, reconstituted_population = "LMPP"))
+dev.off()
+
+# Figure S4D
+print(lollipop_plot_S4(data_S4, reconstituted_population = "CLP"))
+
+setEPS()
+postscript(paste0("../plots/Functional_analysis/FigureS4D_CLPReconstituted.eps"), width = 5, height = 3)
+  print(lollipop_plot_S4(data_S4, reconstituted_population = "CLP"))
+dev.off()
+```
