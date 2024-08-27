@@ -206,6 +206,15 @@ dat.seurat<- dat.seurat[rowSums(dat.seurat@assays$RNA@counts) > 400,]
 rm(Annotation_table, data_counts)
 ```
 
+# Make source data table with filtered raw counts
+```{r}
+data_counts <- as.data.frame(GetAssayData(object = dat.seurat, slot = "counts"))
+colnames(data_counts) <- dat.seurat$Age_Cell_type
+write.table(data_counts,
+            file = paste0("../output_files/scRNAseq_analysis/Counts_table_filtered_cells_SICOF_pipeline_for_sourcedata.txt"),
+            quote = FALSE, sep = "\t", row.names = TRUE, col.names = TRUE)
+```
+
 ## Normalise data with sctransform and create UMAP plots
 Figure 4a
 
