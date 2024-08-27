@@ -5,8 +5,6 @@ Su, Hauenstein, Somuncular et al. Aging is associated with functional and molecu
 
 ## Overview of content
 
-* data
-  - Contains input data for the R scripts
 * output_files
   - Contains relevant outfiles as output by the R scripts
 * plots
@@ -15,3 +13,5 @@ Su, Hauenstein, Somuncular et al. Aging is associated with functional and molecu
   - Contains scripts for data processing done on the Swedish UPPMAX (Uppsala Multidisciplinary Center for Advanced Computational Science) system
 * scripts
   - Contains R scripts used for data analysis from raw counts to make plots and output tables included in the paper
+* data
+  - Input data can be found in Zenodo under DOI: 10.5281/zenodo.13378750. For reanalysis of data, download input data from Zenodo and place into this folder.
