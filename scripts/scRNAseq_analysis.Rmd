@@ -206,7 +206,8 @@ dat.seurat<- dat.seurat[rowSums(dat.seurat@assays$RNA@counts) > 400,]
 rm(Annotation_table, data_counts)
 ```
 
-# Make source data table with filtered raw counts
+## Make source data table with filtered raw counts
+
 ```{r}
 data_counts <- as.data.frame(GetAssayData(object = dat.seurat, slot = "counts"))
 colnames(data_counts) <- dat.seurat$Age_Cell_type
