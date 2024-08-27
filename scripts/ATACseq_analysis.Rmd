@@ -137,7 +137,7 @@ print(p)
 dev.off()
 ```
 
-## Write bed file with all and filtered peaks
+## Write bed file and txt file
 This bed files can be uploaded to UCSC to check which peaks are kept
 
 ```{r Write_bed_all}
@@ -148,6 +148,11 @@ write.table(df_raw[,c("Chr", "Start", "End", "Location", "Peak.Score", "Strand")
 write.table(df_raw_filtered[,c("Chr", "Start", "End", "Location", "Peak.Score", "Strand")],
             file = "../output_files/ATACseq_analysis/mm10_allagegroups5YA_CD150hiandprog_macspeaks_tagdir_mergedPeaks_noadj_5RPKM_inCD49bposCD49bnegLMPPGMP.bed",
             quote = FALSE, sep = "\t", row.names = FALSE, col.names = FALSE)
+
+colnames(df_raw_filtered)[c((length(basic)+1):(length(c(basic,rownames(annotation)))))] <- as.character(annotation$Short_name)
+write.table(df_raw_filtered,
+            file = "../output_files/ATACseq_analysis/mm10_allagegroups5YA_CD150hiandprog_macspeaks_tagdir_mergedPeaks_noadj_5RPKM_inCD49bposCD49bnegLMPPGMP.txt",
+            quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
 ```
 
 ## Correlation heatmap
