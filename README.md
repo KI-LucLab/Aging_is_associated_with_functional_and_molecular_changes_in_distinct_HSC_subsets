@@ -14,4 +14,4 @@ Su, Hauenstein, Somuncular et al. Aging is associated with functional and molecu
 * scripts
   - Contains R scripts used for data analysis from raw counts to make plots and output tables included in the paper
 * data
-  - Input data can be found in Zenodo under DOI: 10.5281/zenodo.13378750. For reanalysis of data, download input data from Zenodo and place into this folder.
+  - Input data can be found in Zenodo under DOI: 10.5281/zenodo.13378750. For reanalysis of data, download input data from Zenodo and place a folder called data.
